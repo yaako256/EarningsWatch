@@ -358,6 +358,7 @@ CREATE TABLE notify_groups (
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     medium notify_medium NOT NULL,
+    paused_at TIMESTAMPTZ,  -- NULL以外なら一時停止中
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -484,6 +485,206 @@ CREATE TABLE notify_queue (
 
 CREATE INDEX idx_notify_queue_status ON notify_queue (status);
 ```
+
+## API設計
+
+APIはJSONベースとし、レスポンスは成功・失敗ともにエンベロープ形式で返す(YaakoDrive方式を踏襲)。
+
+### レスポンス形式
+```json
+{ "data": { }, "error": null }
+```
+
+```json
+{ "data": null, "error": { "code": "not_found", "message": "指定されたリソースが存在しません" } }
+```
+
+### エラーコード
+| code | HTTPステータス | 意味 |
+|------|---------------|------|
+| unauthorized | 401 | 未認証 |
+| forbidden | 403 | 権限不足 |
+| not_found | 404 | リソースが存在しない |
+| already_exists | 409 | 重複(ユーザ名など) |
+| invalid_request | 422 | リクエスト内容が不正 |
+| notify_config_missing | 422 | 送信先設定(webhook_url等)が未設定 |
+| notify_send_failed | 502 | 送信先への通信自体が失敗(タイムアウト・DNS等) |
+| notify_rejected | 502 | 送信先が非2xxを返した(送信先のHTTPステータスをmessageに含める) |
+| import_empty | 422 | インポート対象の行が1件もない(グループ単位インポート時) |
+| internal_error | 500 | サーバ内部エラー |
+
+`notify_send_failed`/`notify_rejected`は、送信処理自体の失敗をユーザに詳しく伝える方針とする。messageには具体的な失敗理由(タイムアウトか、名前解決失敗か、送信先が返したHTTPステータスコードなど)を含める。ただし「200 OKだが目的通りに届いていない」(送信先側の設定ミス等)はユーザ側の責任範囲とし、API側では感知しない。
+
+### ページングの共通仕様(オフセット型)
+ログ・ユーザ一覧・決算情報・フィルタなど、一覧系のエンドポイントで共通のクエリ・レスポンス形式を使い回す。
+
+**リクエスト**
+```
+GET /api/xxx?page=1&per_page=50
+```
+
+**レスポンス(`data`の中身)**
+```json
+{
+  "items": [ ... ],
+  "page": 1,
+  "per_page": 50,
+  "total_count": 1234,
+  "total_pages": 25
+}
+```
+
+Rust側では以下のようなジェネリック構造体でラップし、実装の重複を避ける。
+
+```rust
+#[derive(Serialize)]
+pub struct Page<T> {
+    pub items: Vec<T>,
+    pub page: u32,
+    pub per_page: u32,
+    pub total_count: i64,
+    pub total_pages: u32,
+}
+```
+
+将来、ログなど特定テーブルが大規模化してオフセット型の性能がネックになった場合は、そのエンドポイントだけカーソル方式へ個別に切り替えることを検討する。
+
+### 更新系のメソッド方針
+フロントエンドは「設定項目をポチポチ変更→保存ボタンで反映」という操作を想定しているため、**保存ボタンを介す設定系は`PUT`で全体更新**を基本とする(画面に表示されている設定値をまとめて送る)。一方、**トグル的にその場で即時反映したい操作(一時停止/再開、有効化/無効化など)は個別の`PATCH`/専用エンドポイント**とする。
+
+### 認証エラー時のフロー
+`/api/auth/refresh`が失敗した場合(リフレッシュトークン期限切れ・revoke済みなど)は`401 unauthorized`を返す。フロントエンドはこれを受けたらログイン状態を破棄し、ログイン画面へ遷移する。
+
+### バリデーション方針
+| 項目 | ルール |
+| --- | --- |
+| `ticker` | 空文字不可のみ(パターンチェックはしない) |
+| `company_name` | 空文字不可のみ |
+| `notes` | 任意(空文字許容) |
+| グループ`name` | 空文字不可、文字数上限のみチェック(具体的な上限値・詳細フォーマットは仮設計時に決定) |
+| `webhook_url` | 空文字は許容(未設定として扱う)。値がある場合はURL形式チェックのみ |
+| `embed_color` | `NULL`ならデフォルト色として判定。具体的なフォーマット(16進文字列か整数か)・色選択UIの詳細は仮設計時に決定 |
+
+### 機密情報(webhook_url等)の扱い
+webhook_urlは知られると第三者が任意に送信できてしまう認証情報(シークレット)であるため、以下の方針とする。
+
+- DBには**アプリ層で暗号化**(AES-GCM等、方式詳細は仮設計時に決定)した状態で保存する
+- 暗号鍵はconfigで管理し、環境変数で上書きする
+- 復号は`notify`処理(実際に送信するタイミング)、および`GET /api/groups/{id}/config`のレスポンス生成時に行う
+- APIレスポンスではマスクせず、復号した値をそのまま返す(ユーザ本人が設定内容を確認できる必要があるため。目視での盗み見は脅威モデルに含めない)
+
+### その他
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/health` | ヘルスチェック |
+
+### 認証API
+| メソッド | パス | 説明 |
+|---------|------|------|
+| POST | `/api/auth/login` | ログイン |
+| POST | `/api/auth/refresh` | トークンのリフレッシュ |
+| POST | `/api/auth/logout` | ログアウト |
+| GET | `/api/auth/me` | 再訪問時の自動ログイン用 |
+
+### 管理者API
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/admin/logs?from=&to=&page=&per_page=` | ログ一覧(日時範囲フィルタ・ページング) |
+| GET | `/api/admin/users?page=&per_page=` | ユーザ一覧(ページング) |
+| POST | `/api/admin/users/{id}/disable` | ユーザ無効化 |
+| GET | `/api/admin/users/{id}/summary` | 特定ユーザのグループ数/フィルタ数/媒体種別の集計 |
+| GET | `/api/admin/notify-config` | 定期実行ロガーの通知先設定取得 |
+| PUT | `/api/admin/notify-config` | 定期実行ロガーの通知先設定更新 |
+
+管理者はユーザのグループ数・フィルタ数・媒体種別といった集計値のみ閲覧可能とし、フィルタの中身(ticker/company_name等)は閲覧不可とする。
+
+### 決算情報API
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/earnings?ticker=&company_name=&evaluation=&from=&to=&page=&per_page=` | 決算情報一覧(各種フィルタ・ページング) |
+| GET | `/api/earnings/export` | 決算情報一覧のCSVエクスポート |
+
+### 送信履歴API
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/notify-queue?status=&page=&per_page=` | 送信状況一覧(ready/sent/failed等でフィルタ) |
+
+### グループAPI
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/groups` | 自分のグループ一覧 |
+| POST | `/api/groups` | グループ作成 |
+| PUT | `/api/groups/{id}` | グループ名・媒体の全体更新 |
+| DELETE | `/api/groups/{id}` | グループ削除 |
+| PATCH | `/api/groups/{id}/pause` | グループの通知を一時停止(`paused_at`セット) |
+| PATCH | `/api/groups/{id}/resume` | グループの通知を再開(`paused_at`をNULLに) |
+| GET | `/api/groups/{id}/config` | 媒体別設定取得(discord/slack/email) |
+| PUT | `/api/groups/{id}/config` | 媒体別設定の全体更新 |
+| POST | `/api/groups/{id}/config/test-send` | 現在の送信先設定でテスト通知を送信 |
+| PUT | `/api/groups/bulk-destination` | 送信先一括設定(複数グループへ反映) |
+
+### フィルタAPI(グループ配下ネスト)
+フィルタは必ずいずれかのグループに属するため、パスはグループ配下にネストする。
+
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/groups/{id}/filters?page=&per_page=` | グループ内フィルタ一覧 |
+| POST | `/api/groups/{id}/filters` | フィルタ追加 |
+| PUT | `/api/groups/{id}/filters/{filter_id}` | フィルタ内容の全体更新(ticker/company_name/notes) |
+| PATCH | `/api/groups/{id}/filters/{filter_id}/enable` | フィルタ有効化 |
+| PATCH | `/api/groups/{id}/filters/{filter_id}/disable` | フィルタ無効化 |
+| DELETE | `/api/groups/{id}/filters/{filter_id}` | フィルタ削除 |
+| POST | `/api/filters/import` | フィルタ一括インポート(CSV/Excel、全体設定) |
+| POST | `/api/groups/{id}/filters/import` | フィルタ一括インポート(CSV/Excel、グループ単位) |
+| GET | `/api/filters/export` | フィルタ内容のCSVエクスポート |
+
+有効化/無効化はその場でトグルする操作性を想定し、`PATCH`の専用エンドポイントとして分離する。
+
+#### CSVインポートの「壊れた行」の定義
+- 行全体が空(必須列も含め何も入力されていない) → 無視(エラーにしない)
+- 必須列(`Ticker`, `CompanyName`)のうち片方だけ入力されている(不完全な行) → エラー行として扱う
+
+#### 全体一括設定(`POST /api/filters/import`)固有の挙動
+ユーザ全体のフィルタ設定を一新するタイプのインポートでは、グループ名(`GroupName`列)に応じて以下を行う。
+
+- 存在しないGroupNameが指定された → 新規グループとして自動作成
+- 既存グループのうち、今回のCSVに1件も含まれなかったもの → そのグループを無効化(`paused_at`セット。削除はしない)
+- 追加・無効化が発生した内容はレスポンスDTOでユーザに伝える
+
+#### グループ単位の一括インポート(`POST /api/groups/{id}/filters/import`)固有の挙動
+- 対象グループはURLの`{id}`で確定しているため、グループ名の判別・自動作成・無効化は行わない
+- インポート対象の有効な行が0件だった場合は`import_empty`エラーとし、インポート処理自体を中断する(既存フィルタは変更しない)
+
+#### フィルタ一括インポートのレスポンス例
+インポート結果は専用のレスポンスDTOとし、各項目が初期値(0や空配列)でない場合にフロントエンドで注意表示を行う。
+
+```json
+{
+  "data": {
+    "imported_count": 48,
+    "skipped_empty_rows": 2,
+    "duplicate_count": 3,
+    "error_rows": [],
+    "created_groups": ["新春決算グループ"],
+    "paused_groups": ["旧グループA"]
+  },
+  "error": null
+}
+```
+
+`created_groups`/`paused_groups`は全体一括設定でのみ値が入る(グループ単位インポートでは常に空配列)。
+
+### ユーザ設定API
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/users/me/settings` | 自分の設定取得 |
+| PUT | `/api/users/me/settings` | 自分の設定の全体更新 |
+
+### ダッシュボードAPI
+| メソッド | パス | 説明 |
+|---------|------|------|
+| GET | `/api/dashboard` | 監視銘柄数・直近送信状況などの集計 |
+
 
 ## コンテナ設計
 コンテナは以下の3つ。
