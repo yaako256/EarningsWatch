@@ -475,6 +475,35 @@ CREATE TABLE notify_queue (
 CREATE INDEX idx_notify_queue_status ON notify_queue (status);
 ```
 
+## 管理者ユーザとそれ以外の権限差
+
+個人・家族・友人向けの小規模運用のため、シンプルな2階層(admin/user)とする。グループ数・フィルタ数などの利用制限は設けない(全ユーザ共通で無制限)。
+
+### 管理者(admin)ができること
+| 機能 | 内容 | 対応API |
+| --- | --- | --- |
+| ログ確認 | 全ユーザ分のログを閲覧(日時範囲・ページング) | `GET /api/admin/logs` |
+| ユーザ確認 | ユーザ一覧・各ユーザの利用状況(グループ数/フィルタ数/媒体種別)を閲覧 | `GET /api/admin/users`, `GET /api/admin/users/{id}/summary` |
+| 仮ユーザ作成 | username指定+ランダム仮パスワード自動生成でユーザを作成 | `POST /api/admin/users` |
+| ユーザ無効化(BAN) | 問題があった場合にユーザを無効化(`disabled_at`セット) | `POST /api/admin/users/{id}/disable` |
+| 定期実行ロガーの通知先設定 | warn/error通知先(Discord等)の設定 | `GET/PUT /api/admin/notify-config` |
+
+### 一般ユーザ(user)ができること
+| 機能 | 内容 | 対応API |
+| --- | --- | --- |
+| 自分のユーザ名・パスワード変更 | 仮アカウントから本アカウントへの移行(任意、強制しない) | `PUT /api/users/me/username`, `PUT /api/users/me/password` |
+| グループ・フィルタ・送信先の管理 | 制限なし | 各種グループ/フィルタAPI |
+
+### 管理者が閲覧できない情報
+フィルタの中身(ticker/company_name等)は個人の監視対象情報であるため、管理者であっても閲覧不可。集計値(グループ数・フィルタ数・媒体種別)のみ閲覧可能とする。
+
+### 仮ユーザ作成フロー
+1. 管理者がフロントエンドで仮ユーザ作成を実行(usernameは管理者が指定、パスワードはランダム自動生成)
+2. 生成された仮パスワードは管理者画面に**一度だけ表示**(再表示不可。DBにはハッシュのみ保存)
+3. 管理者が口頭・チャット等でユーザ本人に仮パスワードを伝える
+4. ユーザ名・パスワードの変更は**任意**(強制しない。変えなくても使えるが、変えたくなる程度にはランダムな仮パスワードとする)
+
+
 ## API設計
 
 APIはJSONベースとし、レスポンスは成功・失敗ともにエンベロープ形式で返す(YaakoDrive方式を踏襲)。
@@ -580,12 +609,11 @@ webhook_urlは知られると第三者が任意に送信できてしまう認証
 |---------|------|------|
 | GET | `/api/admin/logs?from=&to=&page=&per_page=` | ログ一覧(日時範囲フィルタ・ページング) |
 | GET | `/api/admin/users?page=&per_page=` | ユーザ一覧(ページング) |
+| POST | `/api/admin/users` | 仮ユーザ作成(username指定+ランダム仮パスワード自動生成) |
 | POST | `/api/admin/users/{id}/disable` | ユーザ無効化 |
 | GET | `/api/admin/users/{id}/summary` | 特定ユーザのグループ数/フィルタ数/媒体種別の集計 |
 | GET | `/api/admin/notify-config` | 定期実行ロガーの通知先設定取得 |
 | PUT | `/api/admin/notify-config` | 定期実行ロガーの通知先設定更新 |
-
-管理者はユーザのグループ数・フィルタ数・媒体種別といった集計値のみ閲覧可能とし、フィルタの中身(ticker/company_name等)は閲覧不可とする。
 
 ### 決算情報API
 | メソッド | パス | 説明 |
@@ -668,6 +696,8 @@ webhook_urlは知られると第三者が任意に送信できてしまう認証
 |---------|------|------|
 | GET | `/api/users/me/settings` | 自分の設定取得 |
 | PUT | `/api/users/me/settings` | 自分の設定の全体更新 |
+| PUT | `/api/users/me/password` | パスワード変更(現在のパスワード確認+新パスワード) |
+| PUT | `/api/users/me/username` | ユーザ名変更 |
 
 ### ダッシュボードAPI
 | メソッド | パス | 説明 |
