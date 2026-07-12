@@ -116,6 +116,7 @@ pub struct EarningItems {
   // フィールド内容(証券コード・公開日時・タイトル等、どの項目を持つか)はスクレイピング対象サイトごとに異なるため、
   // 各サイト専用モジュール内で実装時に決定する
   // 結合・正規化(ticker正規化含む)・ハッシュ化はRust側の1関数に集約する方針は決定済み
+  // 以下は例。実装時に決定
   pub fingerprint_item_1: String,
   pub fingerprint_item_2: String,
   pub fingerprint_item_3: String,
@@ -325,6 +326,11 @@ flush条件:
 | 最終監視実行時刻 | `system_runs`(`run_type='monitor'`)の`run_at`を最新1件取得 |
 | 実行時間の推移 | `run_type`ごとに`duration_ms`を時系列で表示 |
 
+### 対応環境
+スマホ用UIは用意しない。スマホ(モバイル幅)でアクセスした場合は「スマホに対応していません。PCで開いてください。」という案内画面を表示する。
+それでも開きますか？という表示を出して、開けるようにもできるようにする。
+将来拡張として、スマホに対応したレスポンシブCSSを用意することを検討する。
+
 ## JWT/Cookieのフロー
 別プロジェクト(YaakoDrive)の設計をそのまま流用する。
 
@@ -429,15 +435,17 @@ CREATE TABLE notify_groups (
 CREATE TABLE notify_discord_configs (
     group_id UUID PRIMARY KEY REFERENCES notify_groups(id) ON DELETE CASCADE,
     webhook_url TEXT,  -- NULL許容。未設定時はDiscord送信を試みない(暗号化して保存)
-    embed_color TEXT,　-- 16進カラーコード文字列(例:0x87EB87)
-    mention_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    mention_name TEXT
+    embed_color TEXT,  -- 16進カラーコード文字列(例:0x87EB87)
+     mention_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    mention_targets TEXT[] NOT NULL DEFAULT '{}'  -- 複数指定可。ユーザID/ロールID/"everyone"等
 );
 
 -- Slack固有設定(フィールド未定、仮カラム)(後で調べる)
 CREATE TABLE notify_slack_configs (
     group_id UUID PRIMARY KEY REFERENCES notify_groups(id) ON DELETE CASCADE,
-    webhook_url TEXT,  -- NULL許容。未設定時はSlack送信を試みない(暗号化して保存)
+    webhook_url TEXT  -- NULL許容。未設定時はSlack送信を試みない(暗号化して保存)
+    mention_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    mention_targets TEXT[] NOT NULL DEFAULT '{}'  -- 複数指定可。ユーザID/"@here"/"@channel"等
 );
 
 -- フィルタ設定(グループに対して複数)
@@ -691,7 +699,8 @@ pub struct Page<T> {
 | `notes` | 任意(空文字許容) |
 | グループ`name` | 空文字不可、文字数上限のみチェック(具体的な上限値・詳細フォーマットは仮設計時に決定) |
 | `webhook_url` | 空文字は許容(未設定として扱う)。値がある場合はURL形式チェックのみ |
-| `embed_color` | `NULL`ならデフォルト色として判定。具体的なフォーマット(16進文字列か整数か)・色選択UIの詳細は仮設計時に決定 |
+| `embed_color` | `NULL`ならデフォルト色として判定。フォーマットは16進カラーコード文字列(例: `0x87EB87`)に確定。フロントエンドではこの文字列を直接入力させず、0〜255のRGBスライダー等による視覚的な色選択UIを用意し、選択結果をこの文字列形式に変換して送信する |
+| `mention_targets` | 空配列許容(メンションなしとして扱う)。`mention_enabled = true`かつ配列が空の場合は単にメンションなしとして送信する(一応フロントエンドで、その状態で保存できなくする)。Discord/Slackそれぞれの記法への変換(ユーザID/ロールID/`everyone`/`@here`等)は`notify`処理側の実装詳細とし、ブレスト段階では複数人を配列で保持することのみ確定する |
 
 ### 機密情報(webhook_url等)の扱い
 webhook_urlは知られると第三者が任意に送信できてしまう認証情報(シークレット)であるため、以下の方針とする。
