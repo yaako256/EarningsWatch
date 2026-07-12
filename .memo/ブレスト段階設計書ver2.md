@@ -254,13 +254,44 @@ flush条件:
 フィルタ一括インポート時も同様の方針とし、重複行があってもインポート自体は継続する。インポート結果画面またはログで「n件重複の可能性あり」等の警告を表示する。
 
 ## ユーザ画面
-想定画面は以下の2つ。
+想定画面は以下の3つ。
 
-- フィルタ設定画面
+- 設定系
   - 全体設定
   - グループ毎の設定(送信先/送信先ごとの設定など)
   - グループ毎の送信フィルタ
-- ダッシュボード(何銘柄を監視してるかなど)
+- ダッシュボード(ユーザ単位の情報)
+- 決算情報系(決算情報ログ・CSV出力、決算集中度などのグラフ)
+
+### ダッシュボード表示内容(ユーザ単位)
+| 表示項目 | 内容 |
+| --- | --- |
+| グループ数 | 自分が持つ`notify_groups`の件数 |
+| フィルタ数(3行) | 総フィルタ数、ユニーク銘柄数(証券コード基準/銘柄名基準の重複排除) |
+| 送信媒体ごとの数 | discord/slackそれぞれのグループ数 |
+| 直近n件の送信(全体) | `notify_history`から新しい順にn件 |
+| 直近n件の送信(グループごと) | グループを選択して絞り込み表示 |
+| 一時停止中のグループ数 | `paused_at IS NOT NULL`の件数 |
+| webhook未設定のグループ数 | `notify_discord_configs.webhook_url IS NULL`等の件数 |
+| 直近の送信失敗 | `notify_history`の`status = failed`を新しい順に数件 |
+
+システム全体の実績(累計スクレイピング件数、送信成功率、最終監視実行時刻など)はユーザ単位の情報ではないため、ここには含めず管理者専用ダッシュボードとして別画面に切り出す。
+
+### 決算情報系画面
+決算情報は株の情報であり全ユーザ共通で見られるものなので、ダッシュボードとは別画面として独立させる。
+
+- 決算情報ログ(CSV出力可、ticker/company_name/evaluation/日付でフィルタ)
+- 決算集中度などのグラフ(`earnings`テーブルの`published_at`を日別集計して表示)
+
+### 管理者専用ダッシュボード(新設)
+システム全体の実績・稼働状況を見る画面。ユーザダッシュボードとは完全に切り離す。
+
+| 表示項目 | 内容 |
+| --- | --- |
+| 累計スクレイピング件数 | `earnings`の`COUNT(*)`(または`system_runs.new_earnings_count`の`SUM()`) |
+| 送信成功率 | `system_runs`(`run_type='notify'`)の直近n件から`SUM(success_send_count) / SUM(total_send_count)` |
+| 最終監視実行時刻 | `system_runs`(`run_type='monitor'`)の`run_at`を最新1件取得 |
+| 実行時間の推移 | `run_type`ごとに`duration_ms`を時系列で表示 |
 
 ## JWT/Cookieのフロー
 別プロジェクト(YaakoDrive)の設計をそのまま流用する。
@@ -475,6 +506,53 @@ CREATE TABLE notify_queue (
 CREATE INDEX idx_notify_queue_status ON notify_queue (status);
 ```
 
+### 送信履歴
+`notify_queue`とは異なり、実行のたびに削除されない永続的な配送ログ。1グループ×1決算の送信につき1行。「いつ・どのグループへ・何を送ったか」を追跡する。`earnings`のカラムは非正規化せず`fingerprint`経由でJOINして参照する。
+```sql
+CREATE TABLE notify_history (
+  -- 自動採番ID
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  -- 送信先グループ
+  group_id UUID NOT NULL REFERENCES notify_groups(id) ON DELETE CASCADE,
+  -- earningsテーブルとの対応関係を追跡するための参照
+  fingerprint TEXT NOT NULL REFERENCES earnings(fingerprint),
+  -- 送信時刻
+  sent_at TIMESTAMPTZ NOT NULL,
+  -- 送信結果
+  status notify_status NOT NULL
+);
+
+CREATE INDEX idx_notify_history_group_id ON notify_history (group_id);
+CREATE INDEX idx_notify_history_sent_at ON notify_history (sent_at DESC);
+```
+
+### システム実績(管理者専用ダッシュボード用)
+`monitor`/`notify`の実行ごとに1行記録する。累計スクレイピング件数は`earnings`の`COUNT(*)`(または本テーブルの`new_earnings_count`の`SUM()`)で都度集計するため、別途カウンタ列は持たせない。
+```sql
+CREATE TYPE run_type AS ENUM ('monitor', 'notify');
+
+CREATE TABLE system_runs (
+  -- 自動採番ID
+  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  -- どちらの実行由来か
+  run_type run_type NOT NULL,
+  -- 実行時刻
+  run_at TIMESTAMPTZ NOT NULL,
+  -- 実行時間(ミリ秒)
+  duration_ms INT NOT NULL,
+  -- monitor由来のみ。今回新規に捕捉した決算件数
+  new_earnings_count INT,
+  -- notify由来のみ。今回の総送信数
+  total_send_count INT,
+  -- notify由来のみ。今回の送信成功数
+  success_send_count INT
+);
+
+CREATE INDEX idx_system_runs_run_type_run_at ON system_runs (run_type, run_at DESC);
+```
+
+`monitor`実行時は`new_earnings_count`と`duration_ms`のみ記入し、`notify`実行時は`total_send_count`/`success_send_count`と`duration_ms`のみ記入する(該当しない列はNULL)。
+
 ## 管理者ユーザとそれ以外の権限差
 
 個人・家族・友人向けの小規模運用のため、シンプルな2階層(admin/user)とする。グループ数・フィルタ数などの利用制限は設けない(全ユーザ共通で無制限)。
@@ -614,17 +692,20 @@ webhook_urlは知られると第三者が任意に送信できてしまう認証
 | GET | `/api/admin/users/{id}/summary` | 特定ユーザのグループ数/フィルタ数/媒体種別の集計 |
 | GET | `/api/admin/notify-config` | 定期実行ロガーの通知先設定取得 |
 | PUT | `/api/admin/notify-config` | 定期実行ロガーの通知先設定更新 |
+| GET | `/api/admin/dashboard` | 管理者専用ダッシュボード集計 |
 
 ### 決算情報API
 | メソッド | パス | 説明 |
 |---------|------|------|
 | GET | `/api/earnings?ticker=&company_name=&evaluation=&from=&to=&page=&per_page=` | 決算情報一覧(各種フィルタ・ページング) |
 | GET | `/api/earnings/export` | 決算情報一覧のCSVエクスポート |
+| GET | `/api/earnings/summary` | 決算集中度などの集計(グラフ用データ、日別件数など) |
 
 ### 送信履歴API
 | メソッド | パス | 説明 |
 |---------|------|------|
-| GET | `/api/notify-queue?status=&page=&per_page=` | 送信状況一覧(ready/sent/failed等でフィルタ) |
+| GET | `/api/notify-queue?status=&page=&per_page=` | 送信状況一覧(今回実行分。ready/sent/failed等でフィルタ) |
+| GET | `/api/notify-history?group_id=&status=&page=&per_page=` | 送信履歴一覧(`notify_history`。グループ・ステータスでフィルタ) |
 
 ### グループAPI
 | メソッド | パス | 説明 |
@@ -702,7 +783,8 @@ webhook_urlは知られると第三者が任意に送信できてしまう認証
 ### ダッシュボードAPI
 | メソッド | パス | 説明 |
 |---------|------|------|
-| GET | `/api/dashboard` | 監視銘柄数・直近送信状況などの集計 |
+| GET | `/api/dashboard` | ユーザ単位のダッシュボード集計(グループ数/フィルタ数/送信媒体別数/直近送信/一時停止中グループ数/webhook未設定数/直近の送信失敗) |
+| GET | `/api/admin/dashboard` | 管理者専用ダッシュボード集計(累計スクレイピング件数/送信成功率/最終監視実行時刻/実行時間推移) |
 
 
 ## コンテナ設計
@@ -753,11 +835,6 @@ config/
 状態: 未着手 / 優先度: 高
 
 `users.role`カラムはあるが、「管理者のみができること」(定期実行のロガー設定、CLIでの`create-admin`など)以外の機能制限がどこまであるか未整理。個人・友人・家族向けなので、シンプルな2階層(admin/user)で足りるか確認する。API設計で「管理者は集計値のみ閲覧可能」までは決まっているため、それを軸に機能制限全体を整理する。
-
-## ダッシュボード画面の具体的な表示内容
-状態: 未着手 / 優先度: 中
-
-「何銘柄を監視してるか」以外に、ダッシュボードで何を見せたいか(直近の送信履歴、エラー状況など)が未決定。フロントエンド画面設計と合わせて検討すると効率的。
 
 ## マイグレーション実行のタイミング
 状態: 未着手 / 優先度: 中
