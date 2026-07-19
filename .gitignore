@@ -1,4 +1,54 @@
+# Environment Variables (Security) ---
+# 秘密鍵やAPIキーを含む可能性があるため絶対にコミットしない
+.env
+.env.*
+!.env*.example
 
+# 自分用フォルダ/ファイルを除外
 _メモ.md
+.memo/バックエンド開発指南
+generate_tree_ver2.py
 
-.LLMに作らせたやつ
+
+# Rustのビルド成果物は巨大になるため必須
+target
+
+
+# --- Logs ---
+logs/
+*.log
+
+# テスト用cookie
+cookie.txt
+cookies.txt
+cookies_*.txt
+
+# これは追加しないらしい
+!.sqlx
+
+
+# --- フロントエンド作成時に生成されたもの ---
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
