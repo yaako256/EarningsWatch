@@ -1,3 +1,14 @@
-// crates/crypto/src/lib.rs
-//! cryptoクレート。Encrypted<T>/Plain<T>(webhook_url等の汎用暗号化型)。
-//! 型定義の本体はPhase 4で実装する(design/02-types/crypto.md参照)。
+/*
+backend/crates/crypto/src/lib.rs
+cryptoクレートでは暗号化系の値の共通型を定義する
+*/
+
+mod error;
+mod models;
+
+pub use error::DecryptError;
+pub use models::*;
+
+// ===== 用途タグ(型パラメータとして使うマーカー型、フィールドは持たない) =====
+pub struct WebhookUrlTag;
+pub struct SystemNotifyWebhookUrlTag;
