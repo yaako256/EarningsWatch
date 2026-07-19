@@ -1,0 +1,14 @@
+# crates/repository/Cargo.toml
+[package]
+name = "repository"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+auth = { path = "../auth" }
+earnings = { path = "../earnings" }
+subscription = { path = "../subscription" }
+identity = { path = "../identity" }
+
+async-trait = { workspace = true }
+thiserror = { workspace = true }

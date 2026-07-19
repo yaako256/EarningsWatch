@@ -1,0 +1,16 @@
+[package]
+name = "auth"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+identity = { path = "../identity" }
+
+serde = { workspace = true }
+thiserror = { workspace = true }
+jsonwebtoken = { workspace = true }
+argon2 = { workspace = true }
+rand = { workspace = true }
+chrono = { workspace = true }
+# RoleのDB(users.role TEXT)対応のsqlx::Type derive用
+sqlx = { workspace = true }

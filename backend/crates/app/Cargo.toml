@@ -1,0 +1,18 @@
+# crates/app/Cargo.toml
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+auth = { path = "../auth" }
+earnings = { path = "../earnings" }
+subscription = { path = "../subscription" }
+notifier = { path = "../notifier" }
+scraper = { path = "../scraper" }
+repository = { path = "../repository" }
+
+serde = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }

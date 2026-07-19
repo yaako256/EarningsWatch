@@ -1,0 +1,17 @@
+# crates/notifier/Cargo.toml
+[package]
+name = "notifier"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+identity = { path = "../identity" }
+crypto = { path = "../crypto" }
+
+serde = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }
+tokio = { workspace = true }
+
+# Discord webhook送信
+reqwest = { workspace = true }

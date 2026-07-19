@@ -1,0 +1,15 @@
+# crates/scraper/Cargo.toml
+[package]
+name = "scraper"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+earnings = { path = "../earnings" }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+async-trait = { workspace = true }
+thiserror = { workspace = true }
+# tokio::process(Pythonプロセス起動)
+tokio = { workspace = true }

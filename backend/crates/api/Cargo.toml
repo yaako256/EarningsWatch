@@ -1,0 +1,19 @@
+# crates/api/Cargo.toml
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+app = { path = "../app" }
+auth = { path = "../auth" }
+identity = { path = "../identity" }
+content = { path = "../content" }
+
+axum = { workspace = true }
+axum-extra = { workspace = true }
+tower = { workspace = true }
+tower-http = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }

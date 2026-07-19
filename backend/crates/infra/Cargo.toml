@@ -1,0 +1,17 @@
+# crates/infra/Cargo.toml
+[package]
+name = "infra"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+repository = { path = "../repository" }
+auth = { path = "../auth" }
+earnings = { path = "../earnings" }
+subscription = { path = "../subscription" }
+identity = { path = "../identity" }
+
+sqlx = { workspace = true }
+async-trait = { workspace = true }
+chrono = { workspace = true }
+thiserror = { workspace = true }

@@ -1,0 +1,17 @@
+# crates/logging/Cargo.toml
+[package]
+name = "logging"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+
+## SqlLayerの非同期バッチ書き込みに使用
+sqlx = { workspace = true }
+## チャネル(mpsc)・バッチ書き込みタスクに使用
+tokio = { workspace = true }

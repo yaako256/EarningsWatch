@@ -1,0 +1,15 @@
+# crates/earnings/Cargo.toml
+[package]
+name = "earnings"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+identity = { path = "../identity" }
+
+serde = { workspace = true }
+chrono = { workspace = true }
+# EarningsEvaluation/EarningsSourceのsqlx::Type derive用
+sqlx = { workspace = true }
+# fingerprint生成
+sha2 = { workspace = true }
