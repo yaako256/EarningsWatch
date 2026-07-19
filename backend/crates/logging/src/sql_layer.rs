@@ -35,7 +35,7 @@ impl LogSink for ConsoleSink {
     for entry in entries {
       println!(
         "[{:?}][{:?}] {} - {:?} {}",
-        entry.level, entry.process, entry.target, entry.message, entry.fields
+        entry.process, entry.level, entry.target, entry.message, entry.fields
       );
     }
   }
