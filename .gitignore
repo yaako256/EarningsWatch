@@ -10,8 +10,25 @@ _メモ.md
 generate_tree_ver2.py
 
 
+
+# Rust
 # Rustのビルド成果物は巨大になるため必須
-target
+/backend/target/
+# 旧ファイルは除外
+**/*.rs.bk
+# 運用しやすさ優先でCargo.lockも外す
+Cargo.lock
+
+# Node / frontend
+/frontend/node_modules/
+/frontend/dist/
+
+
+
+
+
+
+
 
 
 # --- Logs ---
