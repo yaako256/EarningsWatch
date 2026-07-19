@@ -7,8 +7,8 @@ version = "0.1.0"
 edition = "2024"
 
 [lib]
-# クレート内からの参照名(use config::...)は設計書通り"config"のままにする
-name = "config"
+# クレート内からの参照名
+name = "config_loader"
 
 [dependencies]
 config = { workspace = true }
