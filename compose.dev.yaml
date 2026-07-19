@@ -1,0 +1,114 @@
+﻿# compose.dev.yaml
+# ========================================
+# EarningsWatch 開発用Compose定義
+# ========================================
+
+name: earningswatch-dev
+
+services:
+  db:
+    container_name: earningswatch_db_dev
+
+    # envファイルの指定
+    env_file: config/.env.dev
+
+    environment:
+      # dev用DB名に上書き
+      POSTGRES_DB: earningswatch_dev
+      # POSTGRES_PASSWORDは.env.devのPOSTGRES_PASSWORDが使われる
+
+      # healthcheckコマンドの上書き(DB名変更)
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U earningswatch -d earningswatch_db_dev" ]
+
+    volumes:
+      # devはバックアップ処置などを取らないため
+      # バインドではなく名前付きvolume
+      - postgres_data_dev:/var/lib/postgresql/data
+
+  backend:
+    container_name: earningswatch_backend_dev
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: dev
+
+    working_dir: /workspace/backend
+    tty: true
+
+    command:
+      - cargo
+      - watch
+      - -x
+      - check
+
+    # envファイルの指定
+    env_file: config/.env.dev
+
+    # 環境変数の設定
+    environment:
+      # 実行環境ラベル(上書きconfigファイルの指定に使用)
+      APP_ENV: dev
+      # 設定ファイルのパス
+      APP_CONFIG_DIR: /workspace/config
+
+    volumes:
+      # リポジトリ全体を見られるようにする。
+      - .:/workspace
+
+      # 設定ファイルをvolumeにマウント(読み取り専用)
+      - /config/config.dev.toml:/workspace/config/config.dev.toml:ro
+
+      # Rustの依存キャッシュ。毎回ダウンロードし直さないための名前付きvolume。
+      - cargo_registry:/usr/local/cargo/registry
+      - cargo_git:/usr/local/cargo/git
+
+      # targetは容量が大きいため名前付きvolumeに逃がす。
+      - backend_target:/workspace/backend/target
+
+    ports:
+
+      - "127.0.0.1:8080:8080"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    container_name: earningswatch_frontend_dev
+
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+
+    working_dir: /workspace/frontend
+    tty: true
+
+    volumes:
+      - .:/workspace
+      # node_modulesは大きいので名前付きボリュームに逃がす
+      - frontend_node_modules:/workspace/frontend/node_modules
+
+    ports:
+      - "5173:5173"
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  cargo_registry:
+  cargo_git:
+  backend_target:
+  frontend_node_modules:
+  postgres_data_dev:

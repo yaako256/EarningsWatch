@@ -1,0 +1,79 @@
+﻿# compose.prod.yaml
+# ========================================
+# EarningsWatch 本番用Compose定義
+# ========================================
+
+name: earningswatch-prod
+
+services:
+  db:
+    container_name: earningswatch_db
+
+    # envファイルの指定
+    env_file: config/.env.prod
+
+    environment:
+      POSTGRES_DB: earningswatch_prod
+      # POSTGRES_PASSWORDは.env.prodのPOSTGRES_PASSWORDが使われる
+
+      # healthcheckコマンドの上書き(DB名変更)
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U earningswatch -d earningswatch_prod" ]
+
+  backend:
+    container_name: earningswatch_backend
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+      target: prod
+
+    # envファイルの指定
+    env_file: config/.env.prod
+
+    # 環境変数の設定
+    environment:
+      # 実行環境ラベル(上書きconfigファイルの指定に使用)
+      APP_ENV: prod
+      # 設定ファイルのパス
+      APP_CONFIG_DIR: /app/config
+
+    volumes:
+      # 設定ファイル(読み取り専用)
+      - ./config/config.prod.toml:/app/config/config.prod.toml:ro
+
+    ports:
+      # 127でホスト外からは見えない
+      - "127.0.0.1:8080:8080"
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    container_name: earningswatch_frontend
+    restart: unless-stopped
+
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: prod
+
+    ports:
+      - "3010:80"
+
+    depends_on:
+      - backend
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
