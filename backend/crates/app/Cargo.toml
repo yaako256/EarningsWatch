@@ -11,6 +11,7 @@ subscription = { path = "../subscription" }
 notifier = { path = "../notifier" }
 scraper = { path = "../scraper" }
 repository = { path = "../repository" }
+identity = { path = "../identity" }
 
 serde = { workspace = true }
 chrono = { workspace = true }
