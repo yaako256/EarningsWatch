@@ -74,8 +74,7 @@ COPY backend ./
 # migrationファイルのコピー
 COPY sql /workspace/sql
 
-RUN cargo build --release -p server \
-    && cargo build --release -p cli
+RUN cargo build --release -p server -p cli
 
 # ========================================
 # Prod Stage

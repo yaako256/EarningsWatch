@@ -4,7 +4,7 @@
 # ==================================================
 COMPOSE := docker compose -f compose.yaml -f compose.dev.yaml
 DB_NAME := earningswatch_dev
-CLI := cargo run -p cli -- # todo!実装時に変更
+CLI := cargo run -p cli --
 CONTAINER_SHELL := bash
 MIGRATIONS_PATH := /workspace/sql/migrations # todo!実装時に変更
 
