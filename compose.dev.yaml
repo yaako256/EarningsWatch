@@ -95,8 +95,8 @@ services:
 
     volumes:
       - .:/workspace
-      # node_modulesは大きいので名前付きボリュームに逃がす
-      - frontend_node_modules:/workspace/frontend/node_modules
+      # ボリュームに逃がす
+      - ./frontend/node_modules:/workspace/frontend/node_modules
 
     ports:
       - "5173:5173"
@@ -111,5 +111,4 @@ volumes:
   cargo_registry:
   cargo_git:
   backend_target:
-  frontend_node_modules:
   postgres_data_dev:

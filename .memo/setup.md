@@ -94,6 +94,8 @@ CMD ["sleep", "infinity"]
 ```
 docker compose -f compose.yaml -f compose.dev.yaml up --build
 ```
+もしかしたらこの時に、`frontend/node_module/`がないのにvolume化してるよと言われるかもしれない。
+その時は`compose.dev.yaml`でその行を一旦コメントアウトする。
 
 4. 後述のセットアップが終わったらDockerfileを元に戻す。
 

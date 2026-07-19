@@ -15,8 +15,8 @@ WORKDIR /workspace/frontend
 # ========================================
 FROM base AS dev
 
-CMD ["sleep", "infinity"]
-#CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+#CMD ["sleep", "infinity"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
 # ========================================
 # Builder Stage
