@@ -1,0 +1,32 @@
+﻿# .dockerignore
+# ========================================
+# Docker build contextから除外するもの
+# ========================================
+
+# git系
+.git
+.gitignore
+
+# 自分用フォルダ/ファイル除外
+.docs
+.memo
+*.md
+
+# Rust build artifacts
+backend/target
+
+# Node artifacts
+frontend/node_modules
+frontend/dist
+
+# Local data
+.env
+config/.env.dev
+
+# Editor / OS
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# Docs are not needed in runtime images, but keeping them in context is harmless.
