@@ -68,8 +68,11 @@ eee = { workspace = true }
 fff = "0.8"
 ```
 
-
-# Docker周辺の整備
+### タブ幅
+`rustfmt.toml`を作り、以下を設定
+```toml
+tab_spaces = 2
+```
 
 
 

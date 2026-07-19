@@ -34,8 +34,8 @@ services:
 
     # 環境変数の設定
     environment:
-      # 実行環境ラベル(上書きconfigファイルの指定に使用)
-      APP_ENV: prod
+      # 実行環境ラベル(configのロードに使用)
+      EARNINGSWATCH_ENV: prod
       # 設定ファイルのパス
       APP_CONFIG_DIR: /app/config
 
@@ -46,7 +46,7 @@ services:
     # 127でホスト外からは見えない
     ports:
       # 8080は使用済みなので8090に変更
-      - "127.0.0.1:8090:8080"
+      - "127.0.0.1:8090:8090"
 
     depends_on:
       db:

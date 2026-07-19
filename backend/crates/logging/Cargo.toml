@@ -15,3 +15,5 @@ chrono = { workspace = true }
 sqlx = { workspace = true }
 ## チャネル(mpsc)・バッチ書き込みタスクに使用
 tokio = { workspace = true }
+
+async-trait = { workspace = true }
