@@ -9,6 +9,8 @@ auth = { path = "../auth" }
 earnings = { path = "../earnings" }
 subscription = { path = "../subscription" }
 identity = { path = "../identity" }
+content = { path = "../content" }
 
 async-trait = { workspace = true }
 thiserror = { workspace = true }
+chrono = { workspace = true }
