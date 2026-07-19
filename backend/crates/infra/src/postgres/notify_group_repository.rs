@@ -14,7 +14,7 @@ use repository::{NotifyGroupRepository, RepositoryError};
 use subscription::{NotifyGroup, NotifyMedium};
 
 // 自クレート
-use crate::error_mapping::{map_conflict_error, map_error};
+use super::queries::notify_group;
 
 pub struct PgNotifyGroupRepository {
   pool: PgPool,
@@ -53,103 +53,26 @@ impl From<NotifyGroupRow> for NotifyGroup {
 #[async_trait]
 impl NotifyGroupRepository for PgNotifyGroupRepository {
   async fn find_by_id(&self, id: GroupId) -> Result<Option<NotifyGroup>, RepositoryError> {
-    let row = sqlx::query_as!(
-      NotifyGroupRow,
-      r#"
-      SELECT id, user_id, name, medium as "medium: NotifyMedium",
-              paused_at, created_at, updated_at
-      FROM notify_groups WHERE id = $1
-      "#,
-      id.as_uuid()
-    )
-    .fetch_optional(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(row.map(NotifyGroup::from))
+    notify_group::find_by_id(&self.pool, id).await
   }
 
   async fn list_by_user_id(&self, user_id: UserId) -> Result<Vec<NotifyGroup>, RepositoryError> {
-    let rows = sqlx::query_as!(
-      NotifyGroupRow,
-      r#"
-      SELECT id, user_id, name, medium as "medium: NotifyMedium",
-              paused_at, created_at, updated_at
-      FROM notify_groups WHERE user_id = $1
-      ORDER BY created_at ASC
-      "#,
-      user_id.as_uuid()
-    )
-    .fetch_all(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(rows.into_iter().map(NotifyGroup::from).collect())
+    notify_group::list_by_user_id(&self.pool, user_id).await
   }
 
   async fn list_all(&self) -> Result<Vec<NotifyGroup>, RepositoryError> {
-    let rows = sqlx::query_as!(
-      NotifyGroupRow,
-      r#"
-      SELECT id, user_id, name, medium as "medium: NotifyMedium", paused_at, created_at, updated_at
-      FROM notify_groups
-      ORDER BY created_at ASC
-      "#
-    )
-    .fetch_all(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(rows.into_iter().map(NotifyGroup::from).collect())
+    notify_group::list_all(&self.pool).await
   }
 
   async fn insert(&self, group: &NotifyGroup) -> Result<(), RepositoryError> {
-    sqlx::query!(
-      r#"
-      INSERT INTO notify_groups (id, user_id, name, medium, paused_at, created_at, updated_at)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-      "#,
-      group.id.as_uuid(),
-      group.user_id.as_uuid(),
-      group.name,
-      group.medium as NotifyMedium,
-      group.paused_at,
-      group.created_at,
-      group.updated_at
-    )
-    .execute(&self.pool)
-    .await
-    .map_err(map_conflict_error)?;
-
-    Ok(())
+    notify_group::insert(&self.pool, group).await
   }
 
   async fn update(&self, group: &NotifyGroup) -> Result<(), RepositoryError> {
-    sqlx::query!(
-      r#"
-      UPDATE notify_groups
-      SET name = $2, medium = $3, paused_at = $4, updated_at = $5
-      WHERE id = $1
-      "#,
-      group.id.as_uuid(),
-      group.name,
-      group.medium as NotifyMedium,
-      group.paused_at,
-      group.updated_at
-    )
-    .execute(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(())
+    notify_group::update(&self.pool, group).await
   }
 
   async fn delete(&self, id: GroupId) -> Result<(), RepositoryError> {
-    sqlx::query!("DELETE FROM notify_groups WHERE id = $1", id.as_uuid())
-      .execute(&self.pool)
-      .await
-      .map_err(map_error)?;
-
-    Ok(())
+    notify_group::delete(&self.pool, id).await
   }
 }
