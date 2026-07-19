@@ -82,3 +82,65 @@ fff = "0.8"
 ```bash
 mkdir frontend
 ```
+
+2. dockerfileの編集
+`frontend/Dockerfile`の行を以下のように編集する。
+```dockerfile
+#CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["sleep", "infinity"]
+```
+
+3. 編集用にコンテナを起動
+```
+docker compose -f compose.yaml -f compose.dev.yaml up --build
+```
+
+4. 後述のセットアップが終わったらDockerfileを元に戻す。
+
+## セットアップ
+カレントディレクトリにプロジェクトを作成する。
+```bash
+# 移動
+cd frontend
+
+# プロジェクト作成
+npm create vite@latest .
+
+# インストール
+npm install
+```
+**選択オプション:**
+| 項目 | 選択内容 |
+| :--- | :--- |
+| **Install required package (create-vite)**| Yes (`y`を入力) |
+| **Current directory is not empty** | Ignore files and continue |
+| **Select a framework** | React |
+| **Select a variant** | TypeScript + React Compiler |
+| **Which linter to use?** | ESLint |
+| **Install with npm and start now?** | Yes |
+
+1つ目の質問は、viteのパッケージがないからインストールするねってもの。
+2つ目の質問はすでになんかファイルがあるけどいいの？ってやつ。
+`frontend/`には`Dockerfile`しかなく、それは残しておきたいため、無視してプロジェクトを展開させる。
+5つ目の質問は、どちらでもいいかもしれない。ESLintの方が安定するっぽいのでこっち。
+
+**`.`（カレントディレクトリ）指定による挙動のメモ:**
+```
+・Project name: コマンドを実行したフォルダ名が自動採用された。(多分)
+・Package name: 同上。
+・展開場所: そのフォルダ直下にファイル群が展開された。
+・補足: プロジェクト名を手動で設定するステップはスキップされた。
+```
+
+## 設定変更時
+クローンをしたり、初回は`npm install`動作をしなきゃいけなそうである。
+```bash
+# 開発用コンテナを起動する
+# docker compose -f compose.yaml -f compose.dev.yaml up --build
+
+# フロントエンドのshellに入る
+# docker compose -f compose.yaml -f compose.dev.yaml exec frontend bash
+
+# インストール
+npm install
+```

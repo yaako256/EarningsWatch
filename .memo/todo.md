@@ -16,3 +16,8 @@ requirements.txtを作らなきゃいけん
 # Makefile群
 SQLテーブルや、cliコマンド、migrationパス(そもそもいらないかも)などがYaakoDriveのままとなっている。
 実際に使うときになったら編集する。
+
+# composeのport
+今後おかしくなる可能性がある。
+YaakoDrive含め、ポートの整理をした方がいいかもしれない。
+開発用ポートを何番にするとか、10単位でプロジェクトを分けるとか。

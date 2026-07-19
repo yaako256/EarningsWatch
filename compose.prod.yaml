@@ -43,9 +43,10 @@ services:
       # 設定ファイル(読み取り専用)
       - ./config/config.prod.toml:/app/config/config.prod.toml:ro
 
+    # 127でホスト外からは見えない
     ports:
-      # 127でホスト外からは見えない
-      - "127.0.0.1:8080:8080"
+      # 8080は使用済みなので8090に変更
+      - "127.0.0.1:8090:8080"
 
     depends_on:
       db:
