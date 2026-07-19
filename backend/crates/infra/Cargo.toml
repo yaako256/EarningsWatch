@@ -10,8 +10,12 @@ auth = { path = "../auth" }
 earnings = { path = "../earnings" }
 subscription = { path = "../subscription" }
 identity = { path = "../identity" }
+content = { path = "../content" }
+crypto = { path = "../crypto" }
 
 sqlx = { workspace = true }
 async-trait = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
+uuid = { workspace = true }
+tokio = { workspace = true }
