@@ -22,3 +22,6 @@ tracing = { workspace = true }
 
 # migration用
 sqlx = { workspace = true }
+
+# 対話的パスワード入力
+rpassword = { workspace = true }

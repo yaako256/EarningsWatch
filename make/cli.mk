@@ -7,7 +7,7 @@
 ## 任意のCLIコマンドを実行
 #
 # 実行例:
-# make cli ARGS="migrate"
+# make cli ARGS="migration"
 # make cli ARGS="create-admin --username yaako"
 # make cli ENV=prod ARGS="create-admin --username yaako"
 cli:

@@ -49,7 +49,10 @@ include make/help.mk
 # CLI実行例
 # ==================================================
 # 実行例:
-#		実装時に追記
+#		make cli ARGS="migration"
+# 	make cli ARGS="create-admin --username yaako"
+#
+# 	make cli ENV=prod ARGS="create-admin --username yaako"
 #
 # ==================================================
 # 初回デプロイ手順
