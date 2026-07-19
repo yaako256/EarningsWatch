@@ -18,6 +18,8 @@ PgEarningsRepository/PgNotifyQueueRepository)
 6章の各リポジトリの実装を「executorを引数に取るフリー関数」に切り出し、PgXxxRepository(プール版)と
 PgTxRepositories(トランザクション版)の両方から呼び出す形にリファクタリングしてよい
 (本書では実装直前レベルの型・シグネチャを優先し、リファクタリングの余地として残した)。
+
+→ リファクタリングした。`queries/`に共通化関数を書き、その関数に委譲する形にして重複をなくした。
 */
 
 // 外部クレート
