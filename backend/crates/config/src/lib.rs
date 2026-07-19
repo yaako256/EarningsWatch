@@ -1,3 +1,11 @@
-// crates/config/src/lib.rs
-//! configクレート。設定ファイル・環境変数(EARNINGSWATCH__...)の読み込み。
-//! 実装本体はPhase 2で行う(design/04-security.md 9章参照)。
+/*
+backend/crates/config/src/lib.rs
+設定の型定義とその読み込みを司る
+*/
+mod error;
+mod loader;
+mod setting;
+
+pub use error::ConfigLoadError;
+pub use loader::load;
+pub use setting::*;

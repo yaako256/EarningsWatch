@@ -48,10 +48,10 @@ services:
 
     # 環境変数の設定
     environment:
-      # 実行環境ラベル(上書きconfigファイルの指定に使用)
-      APP_ENV: dev
+      # 実行環境ラベル(configのロードに使用)
+      EARNINGSWATCH_ENV: dev
       # 設定ファイルのパス
-      APP_CONFIG_DIR: /workspace/config
+      EARNINGSWATCH_CONFIG_DIR: /workspace/config
 
     volumes:
       # リポジトリ全体を見られるようにする。
