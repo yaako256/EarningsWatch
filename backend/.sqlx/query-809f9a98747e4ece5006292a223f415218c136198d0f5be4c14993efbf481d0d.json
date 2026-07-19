@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT id, user_id, name, medium as \"medium: NotifyMedium\",\n              paused_at, created_at, updated_at\n      FROM notify_groups WHERE user_id = $1\n      ORDER BY created_at ASC\n      ",
+  "query": "\n    SELECT id, user_id, name, medium as \"medium: NotifyMedium\",\n      paused_at, created_at, updated_at\n    FROM notify_groups WHERE id = $1\n    ",
   "describe": {
     "columns": [
       {
@@ -64,5 +64,5 @@
       false
     ]
   },
-  "hash": "50f67807ff5b6ca48d105cd8358d5613e5f2872fa635bf390a49cf54c8bd8066"
+  "hash": "809f9a98747e4ece5006292a223f415218c136198d0f5be4c14993efbf481d0d"
 }

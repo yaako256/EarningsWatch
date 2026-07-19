@@ -1,0 +1,225 @@
+// backend/crates/infra/src/postgres/queries/earnings.rs
+
+use chrono::NaiveDate;
+use earnings::{Earnings, EarningsEvaluation, EarningsRecord, EarningsSource};
+use repository::RepositoryError;
+use sqlx::{Executor, Postgres, Transaction};
+
+use crate::error_mapping::{map_conflict_error, map_error};
+
+struct EarningsRow {
+  id: i64,
+  ticker: String,
+  company_name: String,
+  published_at: chrono::DateTime<chrono::Utc>,
+  title: String,
+  url: String,
+  summary: String,
+  evaluation: EarningsEvaluation,
+  fingerprint: String,
+  source: EarningsSource,
+}
+
+impl From<EarningsRow> for EarningsRecord {
+  fn from(row: EarningsRow) -> Self {
+    EarningsRecord {
+      id: row.id,
+      ticker: row.ticker,
+      company_name: row.company_name,
+      published_at: row.published_at,
+      title: row.title,
+      url: row.url,
+      summary: row.summary,
+      evaluation: row.evaluation,
+      fingerprint: row.fingerprint,
+      source: row.source,
+    }
+  }
+}
+
+pub(crate) async fn find_by_fingerprint<'e, E>(
+  executor: E,
+  fingerprint: &str,
+) -> Result<Option<EarningsRecord>, RepositoryError>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let row = sqlx::query_as!(
+    EarningsRow,
+    r#"
+    SELECT id, ticker, company_name, published_at, title, url, summary,
+      evaluation as "evaluation: EarningsEvaluation",
+      fingerprint,
+      source as "source: EarningsSource"
+    FROM earnings WHERE fingerprint = $1
+    "#,
+    fingerprint
+  )
+  .fetch_optional(executor)
+  .await
+  .map_err(map_error)?;
+
+  Ok(row.map(EarningsRecord::from))
+}
+
+pub(crate) async fn list_recent_fingerprints<'e, E>(
+  executor: E,
+  limit: u32,
+) -> Result<Vec<String>, RepositoryError>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  // design/03-features/scraping.md 8章: 直近N件のfingerprintのみを既知判定に使う(件数ベース1本化)
+  let rows = sqlx::query_scalar!(
+    r#"SELECT fingerprint FROM earnings ORDER BY published_at DESC LIMIT $1"#,
+    limit as i64
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  Ok(rows)
+}
+
+pub(crate) async fn list<'e, E>(
+  executor: E,
+  page: u32,
+  per_page: u32,
+) -> Result<(Vec<EarningsRecord>, i64), RepositoryError>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let limit = per_page as i64;
+  let offset = page.saturating_sub(1) as i64 * limit;
+
+  // executorの所有権問題を解決するため、
+  // クエリを1つにまとめた
+  let rows = sqlx::query!(
+    r#"
+    SELECT
+      id,
+      ticker,
+      company_name,
+      published_at,
+      title,
+      url,
+      summary,
+      evaluation as "evaluation: EarningsEvaluation",
+      fingerprint,
+      source as "source: EarningsSource",
+      COUNT(*) OVER() as "total_count!"
+    FROM earnings
+    ORDER BY published_at DESC
+    LIMIT $1 OFFSET $2
+    "#,
+    limit,
+    offset
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  let total_count = rows.first().map(|row| row.total_count).unwrap_or(0);
+
+  let records = rows
+    .into_iter()
+    .map(|row| {
+      EarningsRecord::from(EarningsRow {
+        id: row.id,
+        ticker: row.ticker,
+        company_name: row.company_name,
+        published_at: row.published_at,
+        title: row.title,
+        url: row.url,
+        summary: row.summary,
+        evaluation: row.evaluation,
+        fingerprint: row.fingerprint,
+        source: row.source,
+      })
+    })
+    .collect();
+
+  Ok((records, total_count))
+}
+
+pub(crate) async fn count_by_date<'e, E>(
+  executor: E,
+  from: chrono::DateTime<chrono::Utc>,
+  to: chrono::DateTime<chrono::Utc>,
+) -> Result<Vec<(NaiveDate, i64)>, RepositoryError>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  // JST変換はapp層の責務とする(Phase 4引き継ぎ事項参照)。ここではUTCのDATE()で集計するのみ。
+  let rows = sqlx::query!(
+    r#"
+    SELECT DATE(published_at) as "date!", COUNT(*) as "count!"
+    FROM earnings
+    WHERE published_at >= $1 AND published_at < $2
+    GROUP BY DATE(published_at)
+    ORDER BY DATE(published_at)
+    "#,
+    from,
+    to
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  Ok(rows.into_iter().map(|r| (r.date, r.count)).collect())
+}
+
+pub(crate) async fn insert_one<'e, E>(
+  executor: E,
+  item: &Earnings,
+  fingerprint: &str,
+) -> Result<EarningsRecord, RepositoryError>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let row = sqlx::query_as!(
+    EarningsRow,
+    r#"
+    INSERT INTO earnings (ticker, company_name, published_at, title, url, summary, evaluation, fingerprint, source)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    RETURNING id, ticker, company_name, published_at, title, url, summary,
+      evaluation as "evaluation: EarningsEvaluation",
+      fingerprint,
+      source as "source: EarningsSource"
+    "#,
+    item.ticker,
+    item.company_name,
+    item.published_at,
+    item.title,
+    item.url,
+    item.summary,
+    item.evaluation as EarningsEvaluation,
+    fingerprint,
+    EarningsSource::Kabuyoho as EarningsSource,
+  )
+  .fetch_one(executor)
+  .await
+  .map_err(map_conflict_error)?;
+
+  Ok(EarningsRecord::from(row))
+}
+
+pub(crate) async fn insert_many(
+  tx: &mut Transaction<'_, Postgres>,
+  items: &[Earnings],
+  fingerprints: &[String],
+) -> Result<Vec<EarningsRecord>, RepositoryError> {
+  if items.len() != fingerprints.len() {
+    return Err(RepositoryError::Other(
+      "itemsとfingerprintsの件数が一致しません".to_string(),
+    ));
+  }
+
+  let mut records = Vec::with_capacity(items.len());
+
+  for (item, fingerprint) in items.iter().zip(fingerprints) {
+    records.push(insert_one(&mut **tx, item, fingerprint).await?);
+  }
+
+  Ok(records)
+}

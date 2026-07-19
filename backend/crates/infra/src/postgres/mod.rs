@@ -17,6 +17,8 @@ mod unit_of_work;
 mod user_repository;
 mod user_settings_repository;
 
+pub(crate) mod queries;
+
 pub use earnings_repository::PgEarningsRepository;
 pub use notify_discord_config_repository::PgNotifyDiscordConfigRepository;
 pub use notify_filter_repository::PgNotifyFilterRepository;

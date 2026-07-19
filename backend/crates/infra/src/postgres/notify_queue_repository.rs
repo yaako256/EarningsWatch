@@ -13,6 +13,7 @@ use repository::{NotifyQueueRepository, RepositoryError};
 use subscription::{NotifyQueueEntry, NotifyStatus};
 
 // 自クレート
+use super::queries::notify_queue;
 use crate::error_mapping::map_error;
 
 pub struct PgNotifyQueueRepository {
@@ -83,104 +84,32 @@ impl TryFrom<NotifyQueueRow> for NotifyQueueEntry {
 #[async_trait]
 impl NotifyQueueRepository for PgNotifyQueueRepository {
   async fn insert_monitor_marker(&self) -> Result<(), RepositoryError> {
-    sqlx::query!(
-      r#"
-      INSERT INTO notify_queue (is_monitor_marker, fetched_at, status)
-      VALUES (TRUE, now(), 'ready')
-      "#
-    )
-    .execute(&self.pool)
-    .await
-    .map_err(map_error)?;
-    Ok(())
+    notify_queue::insert_monitor_marker(&self.pool).await
   }
 
   async fn delete_monitor_marker(&self) -> Result<(), RepositoryError> {
-    sqlx::query!("DELETE FROM notify_queue WHERE is_monitor_marker = TRUE")
-      .execute(&self.pool)
-      .await
-      .map_err(map_error)?;
-    Ok(())
+    notify_queue::delete_monitor_marker(&self.pool).await
   }
 
   async fn monitor_marker_exists(&self) -> Result<bool, RepositoryError> {
-    let count = sqlx::query_scalar!(
-      r#"SELECT COUNT(*) as "count!" FROM notify_queue WHERE is_monitor_marker = TRUE"#
-    )
-    .fetch_one(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(count > 0)
+    notify_queue::monitor_marker_exists(&self.pool).await
   }
 
   async fn replace_data_rows(&self, entries: &[NotifyQueueEntry]) -> Result<(), RepositoryError> {
     let mut tx = self.pool.begin().await.map_err(map_error)?;
 
-    sqlx::query!("DELETE FROM notify_queue WHERE is_monitor_marker = FALSE")
-      .execute(&mut *tx)
-      .await
-      .map_err(map_error)?;
-
-    for entry in entries {
-      sqlx::query!(
-        r#"
-        INSERT INTO notify_queue
-            (fingerprint, is_monitor_marker, source, fetched_at, ticker, company_name,
-              published_at, title, url, summary, evaluation, status)
-        VALUES ($1, FALSE, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        "#,
-        entry.fingerprint,
-        entry.source as EarningsSource,
-        entry.fetched_at,
-        entry.ticker,
-        entry.company_name,
-        entry.published_at,
-        entry.title,
-        entry.url,
-        entry.summary,
-        entry.evaluation as EarningsEvaluation,
-        entry.status as NotifyStatus,
-      )
-      .execute(&mut *tx)
-      .await
-      .map_err(map_error)?;
-    }
+    notify_queue::replace_data_rows(&mut tx, entries).await?;
 
     tx.commit().await.map_err(map_error)?;
+
     Ok(())
   }
 
   async fn list_ready(&self) -> Result<Vec<NotifyQueueEntry>, RepositoryError> {
-    let rows = sqlx::query_as!(
-      NotifyQueueRow,
-      r#"
-      SELECT id, fingerprint, source as "source: EarningsSource", fetched_at,
-        ticker, company_name, published_at, title, url, summary,
-        evaluation as "evaluation: EarningsEvaluation",
-        status as "status: NotifyStatus"
-      FROM notify_queue
-      WHERE is_monitor_marker = FALSE AND status = 'ready'
-      ORDER BY published_at ASC
-      "#
-    )
-    .fetch_all(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    rows.into_iter().map(NotifyQueueEntry::try_from).collect()
+    notify_queue::list_ready(&self.pool).await
   }
 
   async fn update_status(&self, id: i64, status: NotifyStatus) -> Result<(), RepositoryError> {
-    sqlx::query!(
-      "UPDATE notify_queue SET status = $2 WHERE id = $1",
-      id,
-      status as NotifyStatus
-    )
-    .execute(&self.pool)
-    .await
-    .map_err(map_error)?;
-
-    Ok(())
+    notify_queue::update_status(&self.pool, id, status).await
   }
 }

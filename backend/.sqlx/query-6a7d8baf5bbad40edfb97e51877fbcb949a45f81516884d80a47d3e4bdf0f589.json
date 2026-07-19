@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n        INSERT INTO earnings (ticker, company_name, published_at, title, url, summary, evaluation, fingerprint, source)\n        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n        RETURNING id, ticker, company_name, published_at, title, url, summary,\n          evaluation as \"evaluation: EarningsEvaluation\",\n          fingerprint,\n          source as \"source: EarningsSource\"\n        ",
+  "query": "\n    SELECT\n      id,\n      ticker,\n      company_name,\n      published_at,\n      title,\n      url,\n      summary,\n      evaluation as \"evaluation: EarningsEvaluation\",\n      fingerprint,\n      source as \"source: EarningsSource\",\n      COUNT(*) OVER() as \"total_count!\"\n    FROM earnings\n    ORDER BY published_at DESC\n    LIMIT $1 OFFSET $2\n    ",
   "describe": {
     "columns": [
       {
@@ -73,40 +73,17 @@
             }
           }
         }
+      },
+      {
+        "ordinal": 10,
+        "name": "total_count!",
+        "type_info": "Int8"
       }
     ],
     "parameters": {
       "Left": [
-        "Text",
-        "Text",
-        "Timestamptz",
-        "Text",
-        "Text",
-        "Text",
-        {
-          "Custom": {
-            "name": "earnings_evaluation",
-            "kind": {
-              "Enum": [
-                "POSITIVE",
-                "NEUTRAL",
-                "NEGATIVE",
-                "UNRATED"
-              ]
-            }
-          }
-        },
-        "Text",
-        {
-          "Custom": {
-            "name": "earnings_source",
-            "kind": {
-              "Enum": [
-                "kabuyoho"
-              ]
-            }
-          }
-        }
+        "Int8",
+        "Int8"
       ]
     },
     "nullable": [
@@ -119,8 +96,9 @@
       false,
       false,
       false,
-      false
+      false,
+      null
     ]
   },
-  "hash": "ca0b1353d5608c8847aa73219bd48eb44d9d8b84cf3579e0ca871cdcdfb9a23d"
+  "hash": "6a7d8baf5bbad40edfb97e51877fbcb949a45f81516884d80a47d3e4bdf0f589"
 }
