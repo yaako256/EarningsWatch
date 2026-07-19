@@ -19,9 +19,9 @@
 #   cargo run -p cli -- migrate
 # prod:
 #   /app/yaakodrive-cli migrate
-migrate:
-	$(MAKE) cli \
-		ARGS="migrate --migrations-path $(MIGRATIONS_PATH)"
+# migrate:
+# 	$(MAKE) cli \
+# 		ARGS="migrate --migrations-path $(MIGRATIONS_PATH)"
 
 # ==================================================
 # Database Viewer

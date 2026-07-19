@@ -19,3 +19,6 @@ notifier = { path = "../notifier" }
 clap = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+
+# migration用
+sqlx = { workspace = true }
