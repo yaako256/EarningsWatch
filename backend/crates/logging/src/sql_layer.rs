@@ -34,8 +34,8 @@ impl LogSink for ConsoleSink {
   async fn write_batch(&self, entries: &[LogEvent]) {
     for entry in entries {
       println!(
-        "[{:?}][{:?}] {} - {:?}",
-        entry.level, entry.process, entry.target, entry.message
+        "[{:?}][{:?}] {} - {:?} {}",
+        entry.level, entry.process, entry.target, entry.message, entry.fields
       );
     }
   }
