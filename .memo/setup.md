@@ -150,6 +150,10 @@ npm install
 npm install
 ```
 
+## nginx設定
+本運用時はnginxを使う。
+`frontend/nginx.conf`を作る。
+
 
 # DB migrationファイル
 以下のように作る。
@@ -164,5 +168,4 @@ make backend-shell
 
 # migrationファイル作成
 sqlx migrate add <"ファイル名">
-
 ```

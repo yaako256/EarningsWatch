@@ -37,7 +37,7 @@ services:
       # 実行環境ラベル(configのロードに使用)
       EARNINGSWATCH_ENV: prod
       # 設定ファイルのパス
-      APP_CONFIG_DIR: /app/config
+      EARNINGSWATCH_CONFIG_DIR: /app/config
 
     volumes:
       # 設定ファイル(読み取り専用)

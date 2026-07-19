@@ -1,2 +1,29 @@
 # config/config.prod.toml
 # 本番用の設定ファイル
+
+[server]
+host = "0.0.0.0"
+port = 8090
+
+[database]
+# envで上書き
+url = "postgres-url"
+
+[jwt]
+access_token_ttl_minutes = 15
+refresh_token_ttl_days = 30
+
+[cookie]
+secure = false
+
+[security]
+webhook_enc_key = "CHANGE_ME_BASE64_32BYTES"
+
+[logging]
+server_flush_window_seconds = 60
+
+[scraping]
+recent_fingerprint_limit = 100
+
+[notifier]
+default_embed_color = "0x87CEEB"
