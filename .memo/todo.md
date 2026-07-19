@@ -12,3 +12,7 @@
 requirements.txtを作らなきゃいけん
 後で作る。
 現在はrequirements.txtをYutaiWatchからコピってくることで解決しており、devステージでもrequirements.txtを使っている。
+
+# Makefile群
+SQLテーブルや、cliコマンド、migrationパス(そもそもいらないかも)などがYaakoDriveのままとなっている。
+実際に使うときになったら編集する。
