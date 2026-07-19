@@ -1,3 +1,15 @@
-// crates/identity/src/lib.rs
-//! identityクレート。UserId/GroupId/FilterId/PageId/RefreshTokenIdなどのID型。
-//! 型定義の本体はPhase 4で実装する(design/02-types/identity.md参照)。
+/*
+backend/crates/identity/src/lib.rs
+identityクレート
+各種ID型をマクロを使って定義する(Dry原則)。
+*/
+
+mod macro_def;
+use macro_def::define_id_type;
+
+// ===== ID型定義 =====
+define_id_type!(UserId);
+define_id_type!(GroupId);
+define_id_type!(FilterId);
+define_id_type!(PageId);
+define_id_type!(RefreshTokenId);

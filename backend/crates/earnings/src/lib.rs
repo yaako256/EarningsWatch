@@ -1,3 +1,15 @@
-// crates/earnings/src/lib.rs
-//! earningsクレート。決算情報のコアドメイン(Earnings/EarningsEvaluation/fingerprint正規化)。
-//! 型定義・正規化関数の実装本体はPhase 4で行う(design/02-types/earnings.md参照)。
+/*
+backend/crates/earnings/src/lib.rs
+earningsクレート
+決算情報のコアドメインを定義
+*/
+
+mod evaluation;
+mod fingerprint;
+mod record;
+mod ticker;
+
+pub use evaluation::{EarningsEvaluation, EarningsSource};
+pub use fingerprint::compute_fingerprint;
+pub use record::{Earnings, EarningsRecord, MonitoredEarningsReport};
+pub use ticker::normalize_ticker;
