@@ -149,3 +149,20 @@ npm install
 # インストール
 npm install
 ```
+
+
+# DB migrationファイル
+以下のように作る。
+```bash
+# バックエンドコンテナに入る
+# docker compose -f compose.yaml -f compose.dev.yaml exec backend bash
+make backend-shell
+
+# 対象場所に移動
+# `migration/`の中ではなく、`migration/`と同じ階層
+# cd backend
+
+# migrationファイル作成
+sqlx migrate add <"ファイル名">
+
+```
