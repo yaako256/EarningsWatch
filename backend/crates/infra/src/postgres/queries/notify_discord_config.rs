@@ -56,7 +56,7 @@ where
     row.mention_enabled,
     &row.mention_targets
   )
-  .execute(&self.pool)
+  .execute(executor)
   .await
   .map_err(map_error)?;
 

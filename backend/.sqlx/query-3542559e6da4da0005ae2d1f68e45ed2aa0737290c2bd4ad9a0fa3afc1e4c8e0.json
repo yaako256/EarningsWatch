@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT webhook_url, embed_color, mention_enabled, mention_targets\n      FROM notify_discord_configs WHERE group_id = $1\n      ",
+  "query": "\n    SELECT webhook_url, embed_color, mention_enabled, mention_targets\n    FROM notify_discord_configs WHERE group_id = $1\n    ",
   "describe": {
     "columns": [
       {
@@ -36,5 +36,5 @@
       false
     ]
   },
-  "hash": "359ba594a21a0c4cfe08ea3b1478720e89a1c0febd0d168264c7619cad6cf6e8"
+  "hash": "3542559e6da4da0005ae2d1f68e45ed2aa0737290c2bd4ad9a0fa3afc1e4c8e0"
 }

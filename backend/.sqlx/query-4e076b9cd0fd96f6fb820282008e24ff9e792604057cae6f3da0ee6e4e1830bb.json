@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      UPDATE notify_filters\n      SET ticker = $2, company_name = $3, notes = $4, enabled = $5\n      WHERE id = $1\n      ",
+  "query": "\n    UPDATE notify_filters\n    SET ticker = $2, company_name = $3, notes = $4, enabled = $5\n    WHERE id = $1\n    ",
   "describe": {
     "columns": [],
     "parameters": {
@@ -14,5 +14,5 @@
     },
     "nullable": []
   },
-  "hash": "0763c7fae5e4286875579fd56291ebb4dda9d0b7d222fb0f1c77f41f940f523d"
+  "hash": "4e076b9cd0fd96f6fb820282008e24ff9e792604057cae6f3da0ee6e4e1830bb"
 }

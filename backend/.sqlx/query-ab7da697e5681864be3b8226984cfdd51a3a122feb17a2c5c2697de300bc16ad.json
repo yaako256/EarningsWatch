@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT id, group_id, ticker, company_name, notes, enabled, created_at\n      FROM notify_filters WHERE id = $1\n      ",
+  "query": "\n    SELECT id, group_id, ticker, company_name, notes, enabled, created_at\n    FROM notify_filters WHERE group_id = $1 ORDER BY created_at ASC\n    ",
   "describe": {
     "columns": [
       {
@@ -54,5 +54,5 @@
       false
     ]
   },
-  "hash": "9d955099d60cd52206c2179d3456bd274b8e41183114ad78a833892917fa325a"
+  "hash": "ab7da697e5681864be3b8226984cfdd51a3a122feb17a2c5c2697de300bc16ad"
 }

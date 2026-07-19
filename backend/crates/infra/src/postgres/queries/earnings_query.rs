@@ -92,13 +92,22 @@ where
   let limit = per_page as i64;
   let offset = page.saturating_sub(1) as i64 * limit;
 
-  let rows = sqlx::query_as!(
-    EarningsRow,
+  // executorの所有権問題を解決するため、
+  // クエリを1つにまとめた
+  let rows = sqlx::query!(
     r#"
-    SELECT id, ticker, company_name, published_at, title, url, summary,
+    SELECT
+      id,
+      ticker,
+      company_name,
+      published_at,
+      title,
+      url,
+      summary,
       evaluation as "evaluation: EarningsEvaluation",
       fingerprint,
-      source as "source: EarningsSource"
+      source as "source: EarningsSource",
+      COUNT(*) OVER() as "total_count!"
     FROM earnings
     ORDER BY published_at DESC
     LIMIT $1 OFFSET $2
@@ -106,19 +115,31 @@ where
     limit,
     offset
   )
-  .fetch_all(&self.pool)
+  .fetch_all(executor)
   .await
   .map_err(map_error)?;
 
-  let total_count = sqlx::query_scalar!(r#"SELECT COUNT(*) as "count!" FROM earnings"#)
-    .fetch_one(&self.pool)
-    .await
-    .map_err(map_error)?;
+  let total_count = rows.first().map(|row| row.total_count).unwrap_or(0);
 
-  Ok((
-    rows.into_iter().map(EarningsRecord::from).collect(),
-    total_count,
-  ))
+  let records = rows
+    .into_iter()
+    .map(|row| {
+      EarningsRecord::from(EarningsRow {
+        id: row.id,
+        ticker: row.ticker,
+        company_name: row.company_name,
+        published_at: row.published_at,
+        title: row.title,
+        url: row.url,
+        summary: row.summary,
+        evaluation: row.evaluation,
+        fingerprint: row.fingerprint,
+        source: row.source,
+      })
+    })
+    .collect();
+
+  Ok((records, total_count))
 }
 
 pub(crate) async fn count_by_date<'e, E>(
@@ -141,7 +162,7 @@ where
     from,
     to
   )
-  .fetch_all(&self.pool)
+  .fetch_all(executor)
   .await
   .map_err(map_error)?;
 

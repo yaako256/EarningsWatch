@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT id, ticker, company_name, published_at, title, url, summary,\n        evaluation as \"evaluation: EarningsEvaluation\",\n        fingerprint,\n        source as \"source: EarningsSource\"\n      FROM earnings\n      ORDER BY published_at DESC\n      LIMIT $1 OFFSET $2\n      ",
+  "query": "\n    INSERT INTO earnings (ticker, company_name, published_at, title, url, summary, evaluation, fingerprint, source)\n    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n    RETURNING id, ticker, company_name, published_at, title, url, summary,\n      evaluation as \"evaluation: EarningsEvaluation\",\n      fingerprint,\n      source as \"source: EarningsSource\"\n    ",
   "describe": {
     "columns": [
       {
@@ -77,8 +77,36 @@
     ],
     "parameters": {
       "Left": [
-        "Int8",
-        "Int8"
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "earnings_evaluation",
+            "kind": {
+              "Enum": [
+                "POSITIVE",
+                "NEUTRAL",
+                "NEGATIVE",
+                "UNRATED"
+              ]
+            }
+          }
+        },
+        "Text",
+        {
+          "Custom": {
+            "name": "earnings_source",
+            "kind": {
+              "Enum": [
+                "kabuyoho"
+              ]
+            }
+          }
+        }
       ]
     },
     "nullable": [
@@ -94,5 +122,5 @@
       false
     ]
   },
-  "hash": "d14f267378e5749cc8d6a520e6b553d3418e72a25d9b7ef90eb7eae74577d8b4"
+  "hash": "e8dcc5d9909ed4cc6f8eceb7c590bb125f9450646f6c674306d796fa92d25652"
 }
