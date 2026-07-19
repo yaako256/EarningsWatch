@@ -1,0 +1,12 @@
+# crates/content/Cargo.toml
+[package]
+name = "content"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+identity = { path = "../identity" }
+
+serde = { workspace = true }
+chrono = { workspace = true }
+sqlx = { workspace = true }  # PageTypeのsqlx::Type derive用

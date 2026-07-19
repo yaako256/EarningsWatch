@@ -1,0 +1,16 @@
+# crates/config/Cargo.toml
+[package]
+# cargoの"config"は外部crate名と衝突するためパッケージ名を変更
+# (バイナリ側では `use config_loader as config;` 等で読み替える)
+name = "config-loader"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+# クレート内からの参照名(use config::...)は設計書通り"config"のままにする
+name = "config"
+
+[dependencies]
+config = { workspace = true }
+dotenvy = { workspace = true }
+serde = { workspace = true }

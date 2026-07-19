@@ -1,0 +1,21 @@
+# crates/cli/Cargo.toml
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "cli"
+path = "src/main.rs"
+
+[dependencies]
+app = { path = "../app" }
+infra = { path = "../infra" }
+config = { path = "../config", package = "config-loader" }  # 命名回避策
+logging = { path = "../logging" }
+scraper = { path = "../scraper" }
+notifier = { path = "../notifier" }
+
+clap = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }

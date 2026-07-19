@@ -1,0 +1,15 @@
+# crates/subscription/Cargo.toml
+[package]
+name = "subscription"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+identity = { path = "../identity" }
+crypto = { path = "../crypto" }
+earnings = { path = "../earnings" }
+
+serde = { workspace = true }
+chrono = { workspace = true }
+# NotifyMedium/NotifyStatus等のsqlx::Type derive用
+sqlx = { workspace = true }
