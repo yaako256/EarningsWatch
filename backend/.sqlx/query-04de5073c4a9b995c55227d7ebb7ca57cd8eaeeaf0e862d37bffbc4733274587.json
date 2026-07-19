@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT webhook_url, mention_enabled, mention_targets FROM notify_slack_configs WHERE group_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "webhook_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "mention_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 2,
+        "name": "mention_targets",
+        "type_info": "TextArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      true,
+      false,
+      false
+    ]
+  },
+  "hash": "04de5073c4a9b995c55227d7ebb7ca57cd8eaeeaf0e862d37bffbc4733274587"
+}

@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO notify_history (group_id, fingerprint, sent_at, status)\n      VALUES ($1, $2, $3, $4)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Timestamptz",
+        {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "62602da9b187cec4e10374cf409b061c261789160e7084e5297e20d1fc777640"
+}

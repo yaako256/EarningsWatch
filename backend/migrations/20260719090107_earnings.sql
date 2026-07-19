@@ -30,7 +30,7 @@ CREATE TABLE earnings (
   -- 決算情報へのURL
   url TEXT NOT NULL,
   -- 決算要約
-  summary TEXT,
+  summary TEXT NOT NULL,
   -- 決算評価
   evaluation earnings_evaluation NOT NULL,
   -- 決算識別fingerprint

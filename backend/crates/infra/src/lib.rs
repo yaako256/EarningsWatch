@@ -1,3 +1,12 @@
-// crates/infra/src/lib.rs
-//! infraクレート。Repository/UnitOfWork TraitのPostgreSQL/sqlx実装。
-//! 実装本体はPhase 5で行う。
+/*
+backend/crates/infra/src/lib.rs
+infraクレート
+Repository/UnitOfWork TraitのPostgreSQL/sqlx実装
+*/
+
+mod error_mapping;
+mod pool;
+mod postgres;
+
+pub use pool::create_pool;
+pub use postgres::*;

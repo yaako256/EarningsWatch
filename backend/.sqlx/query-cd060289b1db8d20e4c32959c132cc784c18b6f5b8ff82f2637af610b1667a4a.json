@@ -1,0 +1,32 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO pages (id, type, title, content_markdown, display_order, is_published, created_at, updated_at, created_by)\n      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        {
+          "Custom": {
+            "name": "page_type",
+            "kind": {
+              "Enum": [
+                "blog",
+                "static"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Text",
+        "Int4",
+        "Bool",
+        "Timestamptz",
+        "Timestamptz",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cd060289b1db8d20e4c32959c132cc784c18b6f5b8ff82f2637af610b1667a4a"
+}
