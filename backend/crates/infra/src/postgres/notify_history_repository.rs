@@ -50,9 +50,11 @@ impl From<NotifyHistoryRow> for NotifyHistoryEntry {
 impl NotifyHistoryRepository for PgNotifyHistoryRepository {
   async fn insert(&self, entry: &NotifyHistoryEntry) -> Result<(), RepositoryError> {
     sqlx::query!(
-      r#"INSERT INTO notify_history (group_id, fingerprint, sent_at, status)
-               VALUES ($1, $2, $3, $4)"#,
-      entry.group_id.map(|g| g.as_uuid()),
+      r#"
+      INSERT INTO notify_history (group_id, fingerprint, sent_at, status)
+      VALUES ($1, $2, $3, $4)
+      "#,
+      entry.group_id.map(|g| *g.as_uuid()),
       entry.fingerprint,
       entry.sent_at,
       entry.status as NotifyStatus,
@@ -76,10 +78,10 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
     let rows = sqlx::query_as!(
       NotifyHistoryRow,
       r#"
-            SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
-            FROM notify_history WHERE group_id = $1
-            ORDER BY sent_at DESC LIMIT $2 OFFSET $3
-            "#,
+      SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
+      FROM notify_history WHERE group_id = $1
+      ORDER BY sent_at DESC LIMIT $2 OFFSET $3
+      "#,
       group_id.as_uuid(),
       limit,
       offset
@@ -113,10 +115,10 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
     let rows = sqlx::query_as!(
       NotifyHistoryRow,
       r#"
-            SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
-            FROM notify_history
-            ORDER BY sent_at DESC LIMIT $1 OFFSET $2
-            "#,
+      SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
+      FROM notify_history
+      ORDER BY sent_at DESC LIMIT $1 OFFSET $2
+      "#,
       limit,
       offset
     )

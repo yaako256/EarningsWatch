@@ -1,0 +1,118 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT id, fingerprint, source as \"source: EarningsSource\", fetched_at,\n        ticker, company_name, published_at, title, url, summary,\n        evaluation as \"evaluation: EarningsEvaluation\",\n        status as \"status: NotifyStatus\"\n      FROM notify_queue\n      WHERE is_monitor_marker = FALSE AND status = 'ready'\n      ORDER BY published_at ASC\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "fingerprint",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "source: EarningsSource",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_source",
+            "kind": {
+              "Enum": [
+                "kabuyoho"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 3,
+        "name": "fetched_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "ticker",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "company_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "published_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 7,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 8,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "summary",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 10,
+        "name": "evaluation: EarningsEvaluation",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_evaluation",
+            "kind": {
+              "Enum": [
+                "POSITIVE",
+                "NEUTRAL",
+                "NEGATIVE",
+                "UNRATED"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 11,
+        "name": "status: NotifyStatus",
+        "type_info": {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      true,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false
+    ]
+  },
+  "hash": "54ed9b8d57e05f84e342030e67c9a23d03e6e869be6343160fc61b7ced4347f1"
+}

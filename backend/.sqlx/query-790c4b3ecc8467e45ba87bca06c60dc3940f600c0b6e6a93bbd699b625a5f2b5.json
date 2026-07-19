@@ -1,0 +1,58 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT id, group_id, fingerprint, sent_at, status as \"status: NotifyStatus\"\n      FROM notify_history\n      ORDER BY sent_at DESC LIMIT $1 OFFSET $2\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "group_id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "fingerprint",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "sent_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "status: NotifyStatus",
+        "type_info": {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "790c4b3ecc8467e45ba87bca06c60dc3940f600c0b6e6a93bbd699b625a5f2b5"
+}

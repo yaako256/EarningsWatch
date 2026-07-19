@@ -1,0 +1,54 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT medium as \"medium: NotifyMedium\", webhook_url, mention_enabled, mention_targets, updated_at\n      FROM system_notify_config WHERE id = TRUE\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "medium: NotifyMedium",
+        "type_info": {
+          "Custom": {
+            "name": "notify_medium",
+            "kind": {
+              "Enum": [
+                "discord",
+                "slack"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 1,
+        "name": "webhook_url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "mention_enabled",
+        "type_info": "Bool"
+      },
+      {
+        "ordinal": 3,
+        "name": "mention_targets",
+        "type_info": "TextArray"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false,
+      true,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6abb5ac65572f89cab89bf4ced53613bc325e76b22203209890dfb73809ab9d9"
+}

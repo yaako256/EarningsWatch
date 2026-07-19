@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO notify_filters (id, group_id, ticker, company_name, notes, enabled, created_at)\n      VALUES ($1, $2, $3, $4, $5, $6, $7)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid",
+        "Text",
+        "Text",
+        "Text",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "e520a31c2651fa6ac34e093225574c1c6d8ed6c561c219a07d2bc00b8314bc6f"
+}

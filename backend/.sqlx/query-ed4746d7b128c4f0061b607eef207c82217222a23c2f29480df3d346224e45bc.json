@@ -1,0 +1,56 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        INSERT INTO notify_queue\n            (fingerprint, is_monitor_marker, source, fetched_at, ticker, company_name,\n              published_at, title, url, summary, evaluation, status)\n        VALUES ($1, FALSE, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)\n        ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Text",
+        {
+          "Custom": {
+            "name": "earnings_source",
+            "kind": {
+              "Enum": [
+                "kabuyoho"
+              ]
+            }
+          }
+        },
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Timestamptz",
+        "Text",
+        "Text",
+        "Text",
+        {
+          "Custom": {
+            "name": "earnings_evaluation",
+            "kind": {
+              "Enum": [
+                "POSITIVE",
+                "NEUTRAL",
+                "NEGATIVE",
+                "UNRATED"
+              ]
+            }
+          }
+        },
+        {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "ed4746d7b128c4f0061b607eef207c82217222a23c2f29480df3d346224e45bc"
+}

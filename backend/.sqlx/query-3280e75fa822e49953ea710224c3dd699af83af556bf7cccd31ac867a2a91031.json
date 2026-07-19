@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT DATE(published_at) as \"date!\", COUNT(*) as \"count!\"\n      FROM earnings\n      WHERE published_at >= $1 AND published_at < $2\n      GROUP BY DATE(published_at)\n      ORDER BY DATE(published_at)\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "date!",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "3280e75fa822e49953ea710224c3dd699af83af556bf7cccd31ac867a2a91031"
+}

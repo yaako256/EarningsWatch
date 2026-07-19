@@ -45,11 +45,17 @@ npm-install:
 # ----------------------------------
 # SQL系統
 # ----------------------------------
+.PHONY: migrate-add migration migrate-psql migrate-psql-db migrate-reset sqlx-prepare
 ## SQLファイル作成
 # 実行例: make migrate-add NAME=create_users
 migrate-add:
 	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
 		sqlx migrate add --source $(MIGRATIONS_PATH) $(NAME)
+
+## migration実行
+migration:
+	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
+		sqlx migrate run
 
 ## PostgreSQLへ接続
 migrate-psql:
@@ -61,13 +67,13 @@ migrate-psql-db:
 	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
 		bash -c 'psql $$DATABASE_URL -c "\l"'
 
-## migrationリセット
+## migrationリセット(テーブル編集の適用)
 migrate-reset:
 	$(COMPOSE) down
-	docker volume rm yaakodrive-dev_postgres_data_dev || true
+	docker volume rm earningswatch-dev_postgres_data_dev || true
 	$(COMPOSE) up -d
 	@echo "Waiting for database..."
-	$(MAKE) migrate
+	$(MAKE) migration
 
 ## sqlx prepare
 sqlx-prepare:

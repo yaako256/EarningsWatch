@@ -1,0 +1,12 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM notify_queue WHERE is_monitor_marker = FALSE",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": []
+  },
+  "hash": "b87002de899816fd3ce2f9ca70434a4a5213ac9784a71f47e08dad05b2643b8c"
+}

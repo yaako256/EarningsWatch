@@ -64,9 +64,9 @@ impl EarningsRepository for PgEarningsRepository {
       EarningsRow,
       r#"
       SELECT id, ticker, company_name, published_at, title, url, summary,
-              evaluation as "evaluation: EarningsEvaluation",
-              fingerprint,
-              source as "source: EarningsSource"
+        evaluation as "evaluation: EarningsEvaluation",
+        fingerprint,
+        source as "source: EarningsSource"
       FROM earnings WHERE fingerprint = $1
       "#,
       fingerprint
@@ -103,9 +103,9 @@ impl EarningsRepository for PgEarningsRepository {
       EarningsRow,
       r#"
       SELECT id, ticker, company_name, published_at, title, url, summary,
-              evaluation as "evaluation: EarningsEvaluation",
-              fingerprint,
-              source as "source: EarningsSource"
+        evaluation as "evaluation: EarningsEvaluation",
+        fingerprint,
+        source as "source: EarningsSource"
       FROM earnings
       ORDER BY published_at DESC
       LIMIT $1 OFFSET $2
@@ -173,9 +173,9 @@ impl EarningsRepository for PgEarningsRepository {
         INSERT INTO earnings (ticker, company_name, published_at, title, url, summary, evaluation, fingerprint, source)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, ticker, company_name, published_at, title, url, summary,
-                  evaluation as "evaluation: EarningsEvaluation",
-                  fingerprint,
-                  source as "source: EarningsSource"
+          evaluation as "evaluation: EarningsEvaluation",
+          fingerprint,
+          source as "source: EarningsSource"
         "#,
         item.ticker,
         item.company_name,
