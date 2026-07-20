@@ -11,7 +11,7 @@ MIGRATIONS_PATH := /workspace/sql/migrations # todo!実装時に変更
 # ==================================================
 ### 環境固有コマンド(dev)
 # ==================================================
-.PHONY: run-server check test dev-reset npm-install
+.PHONY: run-server check test clean dev-reset npm-install
 
 ## サーバ起動（開発用）
 run-server:
@@ -27,6 +27,11 @@ check:
 test:
 	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
 		cargo test
+
+## Cargo clean
+clean:
+	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
+		cargo clean
 
 ## 開発環境を完全リセット
 # DB・コンテナを再作成し、migrationまで実行する
