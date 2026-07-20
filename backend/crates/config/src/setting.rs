@@ -38,6 +38,8 @@ pub struct DatabaseSettings {
 /// JWT設定
 #[derive(Debug, Clone, Deserialize)]
 pub struct JwtSettings {
+  // JWT秘密鍵
+  pub secret: String,
   /// アクセストークン期限 (既定:15分)
   pub access_token_ttl_minutes: i64,
   /// リフレッシュトークン期限 (既定:30日)
