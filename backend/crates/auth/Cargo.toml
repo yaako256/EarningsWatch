@@ -10,6 +10,7 @@ serde = { workspace = true }
 thiserror = { workspace = true }
 jsonwebtoken = { workspace = true }
 argon2 = { workspace = true }
+sha2 = { workspace = true }
 rand = { workspace = true }
 chrono = { workspace = true }
 # RoleのDB(users.role TEXT)対応のsqlx::Type derive用
