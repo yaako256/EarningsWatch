@@ -14,6 +14,7 @@ app = { path = "../app" }
 infra = { path = "../infra" }
 config = { path = "../config", package = "config-loader" }  # 命名回避策
 logging = { path = "../logging" }
+repository = { path = "../repository" }
 
 axum = { workspace = true }
 tokio = { workspace = true }

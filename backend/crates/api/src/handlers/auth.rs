@@ -129,8 +129,6 @@ pub async fn me(
   State(state): State<AppState>,
   auth_user: AuthUser,
 ) -> Result<Json<ApiResponse<MeResponse>>, ApiAppError> {
-  use repository::UserRepository;
-
   let user = state
     .user_repository
     .find_by_id(auth_user.user_id)
