@@ -30,13 +30,15 @@ use tokio::sync::Mutex;
 // 内部ライブラリ
 use repository::{
   BoxFuture, EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository,
-  NotifyGroupRepository, NotifyQueueRepository, RepositoryError, RepositoryScope, UnitOfWork,
+  NotifyGroupRepository, NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError,
+  RepositoryScope, UnitOfWork,
 };
 
 // 自クレート
 // クエリ共通化関数
 use super::queries::{
   earnings_query, notify_discord_config, notify_filter, notify_group, notify_queue,
+  notify_slack_config,
 };
 
 /// 1トランザクション内で動く全Repositoryを1つの構造体にまとめ、
@@ -114,6 +116,25 @@ impl NotifyDiscordConfigRepository for PgTxRepositories {
   }
 }
 
+#[async_trait]
+impl NotifySlackConfigRepository for PgTxRepositories {
+  async fn find_by_group_id(
+    &self,
+    group_id: identity::GroupId,
+  ) -> Result<Option<repository::NotifySlackConfigRow>, RepositoryError> {
+    let mut tx = self.tx.lock().await;
+    notify_slack_config::find_by_group_id(&mut **tx, group_id).await
+  }
+
+  async fn upsert(
+    &self,
+    group_id: identity::GroupId,
+    row: &repository::NotifySlackConfigRow,
+  ) -> Result<(), RepositoryError> {
+    let mut tx = self.tx.lock().await;
+    notify_slack_config::upsert(&mut **tx, group_id, row).await
+  }
+}
 #[async_trait]
 impl NotifyFilterRepository for PgTxRepositories {
   async fn find_by_id(
@@ -245,6 +266,9 @@ impl RepositoryScope for PgTxRepositories {
     self
   }
   fn notify_discord_config_repository(&mut self) -> &mut dyn NotifyDiscordConfigRepository {
+    self
+  }
+  fn notify_slack_config_repository(&mut self) -> &mut dyn NotifySlackConfigRepository {
     self
   }
   fn notify_filter_repository(&mut self) -> &mut dyn NotifyFilterRepository {
