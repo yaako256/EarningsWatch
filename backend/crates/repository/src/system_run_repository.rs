@@ -28,4 +28,15 @@ pub trait SystemRunRepository: Send + Sync {
     total_send_count: i32,
     success_send_count: i32,
   ) -> RepositoryResult<()>;
+
+  async fn recent_notify_success_rate(&self, recent_n: u32) -> RepositoryResult<Option<f64>>;
+
+  /// 最終監視実行時刻
+  async fn last_monitor_run_at(&self) -> RepositoryResult<Option<chrono::DateTime<chrono::Utc>>>;
+
+  /// run_typeは生文字列('monitor'/'notify')で返し、api層でSystemRunTypeへ変換する
+  async fn recent_run_durations(
+    &self,
+    recent_n: u32,
+  ) -> RepositoryResult<Vec<(String, chrono::DateTime<chrono::Utc>, i32)>>;
 }

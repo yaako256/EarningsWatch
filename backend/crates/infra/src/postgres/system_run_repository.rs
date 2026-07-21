@@ -69,4 +69,62 @@ impl SystemRunRepository for PgSystemRunRepository {
 
     Ok(())
   }
+
+  async fn recent_notify_success_rate(&self, recent_n: u32) -> RepositoryResult<Option<f64>> {
+    let row = sqlx::query!(
+      r#"
+      SELECT SUM(success_send_count) as total_success, SUM(total_send_count) as total_sent
+      FROM (
+        SELECT success_send_count, total_send_count
+        FROM system_runs
+        WHERE run_type = 'notify'
+        ORDER BY run_at DESC
+        LIMIT $1
+      ) recent
+      "#,
+      recent_n as i64
+    )
+    .fetch_one(&self.pool)
+    .await
+    .map_err(map_error)?;
+
+    match (row.total_success, row.total_sent) {
+      (Some(success), Some(total)) if total > 0 => Ok(Some(success as f64 / total as f64)),
+      _ => Ok(None),
+    }
+  }
+
+  async fn last_monitor_run_at(&self) -> RepositoryResult<Option<chrono::DateTime<chrono::Utc>>> {
+    sqlx::query_scalar!(
+      r#"SELECT run_at FROM system_runs WHERE run_type = 'monitor' ORDER BY run_at DESC LIMIT 1"#
+    )
+    .fetch_optional(&self.pool)
+    .await
+    .map_err(map_error)
+  }
+
+  async fn recent_run_durations(
+    &self,
+    recent_n: u32,
+  ) -> RepositoryResult<Vec<(String, chrono::DateTime<chrono::Utc>, i32)>> {
+    let rows = sqlx::query!(
+      r#"
+      SELECT run_type::text as "run_type!", run_at, duration_ms
+      FROM system_runs
+      ORDER BY run_at DESC
+      LIMIT $1
+      "#,
+      recent_n as i64
+    )
+    .fetch_all(&self.pool)
+    .await
+    .map_err(map_error)?;
+
+    Ok(
+      rows
+        .into_iter()
+        .map(|r| (r.run_type, r.run_at, r.duration_ms))
+        .collect(),
+    )
+  }
 }
