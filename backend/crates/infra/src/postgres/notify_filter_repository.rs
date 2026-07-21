@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::{FilterId, GroupId};
-use repository::{NotifyFilterRepository, RepositoryResult};
+use repository::{FilterCountBreakdown, NotifyFilterRepository, RepositoryResult};
 use subscription::NotifyFilter;
 
 // 自クレート
@@ -86,5 +86,12 @@ impl NotifyFilterRepository for PgNotifyFilterRepository {
     tx.commit().await.map_err(map_error)?;
 
     Ok(())
+  }
+
+  async fn count_breakdown_by_user(
+    &self,
+    user_id: identity::UserId,
+  ) -> RepositoryResult<FilterCountBreakdown> {
+    notify_filter::count_breakdown_by_user(&self.pool, user_id).await
   }
 }

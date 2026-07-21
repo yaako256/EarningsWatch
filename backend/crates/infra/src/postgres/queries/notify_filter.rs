@@ -1,8 +1,8 @@
 // backend/crates/infra/src/postgres/queries/notify_filter.rs
 
 use chrono::{DateTime, Utc};
-use identity::{FilterId, GroupId};
-use repository::RepositoryResult;
+use identity::{FilterId, GroupId, UserId};
+use repository::{FilterCountBreakdown, RepositoryResult};
 use sqlx::{Executor, Postgres, Transaction};
 use subscription::NotifyFilter;
 use uuid::Uuid;
@@ -166,4 +166,34 @@ where
   .map_err(map_error)?;
 
   Ok(())
+}
+
+pub(crate) async fn count_breakdown_by_user<'e, E>(
+  executor: E,
+  user_id: UserId,
+) -> RepositoryResult<FilterCountBreakdown>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let row = sqlx::query!(
+    r#"
+    SELECT
+      COUNT(*) as "total!",
+      COUNT(DISTINCT f.ticker) as "unique_ticker_count!",
+      COUNT(DISTINCT f.company_name) as "unique_company_name_count!"
+    FROM notify_filters f
+    JOIN notify_groups g ON g.id = f.group_id
+    WHERE g.user_id = $1
+    "#,
+    user_id.as_uuid()
+  )
+  .fetch_one(executor)
+  .await
+  .map_err(map_error)?;
+
+  Ok(FilterCountBreakdown {
+    total: row.total as u32,
+    unique_ticker_count: row.unique_ticker_count as u32,
+    unique_company_name_count: row.unique_company_name_count as u32,
+  })
 }

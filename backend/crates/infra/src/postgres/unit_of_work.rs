@@ -30,9 +30,10 @@ use tokio::sync::Mutex;
 // 内部ライブラリ
 use earnings::EarningsRecord;
 use repository::{
-  BoxFuture, EarningsListFilter, EarningsRepository, NotifyDiscordConfigRepository,
-  NotifyFilterRepository, NotifyGroupRepository, NotifyQueueRepository,
-  NotifySlackConfigRepository, RepositoryError, RepositoryResult, RepositoryScope, UnitOfWork,
+  BoxFuture, EarningsListFilter, EarningsRepository, FilterCountBreakdown,
+  NotifyDiscordConfigRepository, NotifyFilterRepository, NotifyGroupRepository,
+  NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError, RepositoryResult,
+  RepositoryScope, UnitOfWork,
 };
 
 // 自クレート
@@ -176,6 +177,14 @@ impl NotifyFilterRepository for PgTxRepositories {
   ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_filter::replace_all_for_group(&mut *tx, group_id, filters).await
+  }
+
+  async fn count_breakdown_by_user(
+    &self,
+    user_id: identity::UserId,
+  ) -> RepositoryResult<FilterCountBreakdown> {
+    let mut tx = self.tx.lock().await;
+    notify_filter::count_breakdown_by_user(&mut **tx, user_id).await
   }
 }
 

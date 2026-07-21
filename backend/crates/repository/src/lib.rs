@@ -26,7 +26,7 @@ pub use notify_config_repository::{
   discord::{NotifyDiscordConfigRepository, NotifyDiscordConfigRow},
   slack::{NotifySlackConfigRepository, NotifySlackConfigRow},
 };
-pub use notify_filter_repository::NotifyFilterRepository;
+pub use notify_filter_repository::{FilterCountBreakdown, NotifyFilterRepository};
 pub use notify_group_repository::NotifyGroupRepository;
 pub use notify_history_repository::NotifyHistoryRepository;
 pub use notify_queue_repository::NotifyQueueRepository;
