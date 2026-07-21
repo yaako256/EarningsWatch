@@ -274,6 +274,7 @@ pub async fn bulk_delete(
 
 // ─── POST /api/filters/import(全体一括設定) ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImportFilterRow {
   pub ticker: String,
   pub company_name: String,
