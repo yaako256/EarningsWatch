@@ -2,7 +2,7 @@
 
 use chrono::NaiveDate;
 use earnings::{Earnings, EarningsEvaluation, EarningsRecord, EarningsSource};
-use repository::RepositoryError;
+use repository::{RepositoryError, RepositoryResult};
 use sqlx::{Executor, Postgres, Transaction};
 
 use crate::error_mapping::{map_conflict_error, map_error};
@@ -40,7 +40,7 @@ impl From<EarningsRow> for EarningsRecord {
 pub(crate) async fn find_by_fingerprint<'e, E>(
   executor: E,
   fingerprint: &str,
-) -> Result<Option<EarningsRecord>, RepositoryError>
+) -> RepositoryResult<Option<EarningsRecord>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -65,7 +65,7 @@ where
 pub(crate) async fn list_recent_fingerprints<'e, E>(
   executor: E,
   limit: u32,
-) -> Result<Vec<String>, RepositoryError>
+) -> RepositoryResult<Vec<String>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -85,7 +85,7 @@ pub(crate) async fn list<'e, E>(
   executor: E,
   page: u32,
   per_page: u32,
-) -> Result<(Vec<EarningsRecord>, i64), RepositoryError>
+) -> RepositoryResult<(Vec<EarningsRecord>, i64)>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -146,7 +146,7 @@ pub(crate) async fn count_by_date<'e, E>(
   executor: E,
   from: chrono::DateTime<chrono::Utc>,
   to: chrono::DateTime<chrono::Utc>,
-) -> Result<Vec<(NaiveDate, i64)>, RepositoryError>
+) -> RepositoryResult<Vec<(NaiveDate, i64)>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -173,7 +173,7 @@ pub(crate) async fn insert_one<'e, E>(
   executor: E,
   item: &Earnings,
   fingerprint: &str,
-) -> Result<EarningsRecord, RepositoryError>
+) -> RepositoryResult<EarningsRecord>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -208,7 +208,7 @@ pub(crate) async fn insert_many(
   tx: &mut Transaction<'_, Postgres>,
   items: &[Earnings],
   fingerprints: &[String],
-) -> Result<Vec<EarningsRecord>, RepositoryError> {
+) -> RepositoryResult<Vec<EarningsRecord>> {
   if items.len() != fingerprints.len() {
     return Err(RepositoryError::Other(
       "itemsとfingerprintsの件数が一致しません".to_string(),

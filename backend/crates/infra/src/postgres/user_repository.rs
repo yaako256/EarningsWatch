@@ -11,7 +11,7 @@ use uuid::Uuid;
 // 内部ライブラリ
 use auth::{Role, User};
 use identity::UserId;
-use repository::{RepositoryError, UserRepository};
+use repository::{RepositoryResult, UserRepository};
 
 // 自クレート
 use crate::error_mapping::{map_conflict_error, map_error};
@@ -52,7 +52,7 @@ impl From<UserRow> for User {
 
 #[async_trait]
 impl UserRepository for PgUserRepository {
-  async fn find_by_id(&self, id: UserId) -> Result<Option<User>, RepositoryError> {
+  async fn find_by_id(&self, id: UserId) -> RepositoryResult<Option<User>> {
     let row = sqlx::query_as!(
       UserRow,
       r#"
@@ -70,7 +70,7 @@ impl UserRepository for PgUserRepository {
     Ok(row.map(User::from))
   }
 
-  async fn find_by_username(&self, username: &str) -> Result<Option<User>, RepositoryError> {
+  async fn find_by_username(&self, username: &str) -> RepositoryResult<Option<User>> {
     let row = sqlx::query_as!(
       UserRow,
       r#"
@@ -88,7 +88,7 @@ impl UserRepository for PgUserRepository {
     Ok(row.map(User::from))
   }
 
-  async fn list(&self, page: u32, per_page: u32) -> Result<(Vec<User>, i64), RepositoryError> {
+  async fn list(&self, page: u32, per_page: u32) -> RepositoryResult<(Vec<User>, i64)> {
     let limit = per_page as i64;
     let offset = page.saturating_sub(1) as i64 * limit;
 
@@ -116,7 +116,7 @@ impl UserRepository for PgUserRepository {
     Ok((rows.into_iter().map(User::from).collect(), total_count))
   }
 
-  async fn insert(&self, user: &User) -> Result<(), RepositoryError> {
+  async fn insert(&self, user: &User) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO users (id, username, password_hash, role, created_at, updated_at, disabled_at)
@@ -137,7 +137,7 @@ impl UserRepository for PgUserRepository {
     Ok(())
   }
 
-  async fn update(&self, user: &User) -> Result<(), RepositoryError> {
+  async fn update(&self, user: &User) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       UPDATE users

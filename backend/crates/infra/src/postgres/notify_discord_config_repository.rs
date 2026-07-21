@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use identity::GroupId;
-use repository::{NotifyDiscordConfigRepository, NotifyDiscordConfigRow, RepositoryError};
+use repository::{NotifyDiscordConfigRepository, NotifyDiscordConfigRow, RepositoryResult};
 
 // 自クレート
 use super::queries::notify_discord_config;
@@ -29,15 +29,11 @@ impl NotifyDiscordConfigRepository for PgNotifyDiscordConfigRepository {
   async fn find_by_group_id(
     &self,
     group_id: GroupId,
-  ) -> Result<Option<NotifyDiscordConfigRow>, RepositoryError> {
+  ) -> RepositoryResult<Option<NotifyDiscordConfigRow>> {
     notify_discord_config::find_by_group_id(&self.pool, group_id).await
   }
 
-  async fn upsert(
-    &self,
-    group_id: GroupId,
-    row: &NotifyDiscordConfigRow,
-  ) -> Result<(), RepositoryError> {
+  async fn upsert(&self, group_id: GroupId, row: &NotifyDiscordConfigRow) -> RepositoryResult<()> {
     notify_discord_config::upsert(&self.pool, group_id, row).await
   }
 }

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use crypto::Encrypted;
-use repository::{RepositoryError, SystemNotifyConfigRepository};
+use repository::{RepositoryResult, SystemNotifyConfigRepository};
 use subscription::{NotifyMedium, SystemNotifyConfig};
 
 // 自クレート
@@ -27,7 +27,7 @@ impl PgSystemNotifyConfigRepository {
 
 #[async_trait]
 impl SystemNotifyConfigRepository for PgSystemNotifyConfigRepository {
-  async fn get(&self) -> Result<Option<SystemNotifyConfig>, RepositoryError> {
+  async fn get(&self) -> RepositoryResult<Option<SystemNotifyConfig>> {
     let row = sqlx::query!(
       r#"
       SELECT medium as "medium: NotifyMedium", webhook_url, mention_enabled, mention_targets, updated_at
@@ -47,7 +47,7 @@ impl SystemNotifyConfigRepository for PgSystemNotifyConfigRepository {
     }))
   }
 
-  async fn upsert(&self, config: &SystemNotifyConfig) -> Result<(), RepositoryError> {
+  async fn upsert(&self, config: &SystemNotifyConfig) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO system_notify_config (id, medium, webhook_url, mention_enabled, mention_targets, updated_at)

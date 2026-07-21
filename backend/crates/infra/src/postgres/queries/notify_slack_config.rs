@@ -1,7 +1,7 @@
 // backend/crates/infra/src/postgres/queries/notify_slack_config.rs
 
 use identity::GroupId;
-use repository::{NotifySlackConfigRow, RepositoryError};
+use repository::{NotifySlackConfigRow, RepositoryResult};
 use sqlx::{Executor, Postgres};
 
 use crate::error_mapping::map_error;
@@ -9,7 +9,7 @@ use crate::error_mapping::map_error;
 pub(crate) async fn find_by_group_id<'e, E>(
   executor: E,
   group_id: GroupId,
-) -> Result<Option<NotifySlackConfigRow>, RepositoryError>
+) -> RepositoryResult<Option<NotifySlackConfigRow>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -35,7 +35,7 @@ pub(crate) async fn upsert<'e, E>(
   executor: E,
   group_id: GroupId,
   row: &NotifySlackConfigRow,
-) -> Result<(), RepositoryError>
+) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {

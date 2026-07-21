@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use identity::{FilterId, GroupId};
-use repository::RepositoryError;
+use repository::RepositoryResult;
 use sqlx::{Executor, Postgres, Transaction};
 use subscription::NotifyFilter;
 use uuid::Uuid;
@@ -36,7 +36,7 @@ impl From<NotifyFilterRow> for NotifyFilter {
 pub(crate) async fn find_by_id<'e, E>(
   executor: E,
   id: FilterId,
-) -> Result<Option<NotifyFilter>, RepositoryError>
+) -> RepositoryResult<Option<NotifyFilter>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -58,7 +58,7 @@ where
 pub(crate) async fn list_by_group_id<'e, E>(
   executor: E,
   group_id: GroupId,
-) -> Result<Vec<NotifyFilter>, RepositoryError>
+) -> RepositoryResult<Vec<NotifyFilter>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -77,7 +77,7 @@ where
   Ok(rows.into_iter().map(NotifyFilter::from).collect())
 }
 
-pub(crate) async fn insert<'e, E>(executor: E, filter: &NotifyFilter) -> Result<(), RepositoryError>
+pub(crate) async fn insert<'e, E>(executor: E, filter: &NotifyFilter) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -101,7 +101,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn update<'e, E>(executor: E, filter: &NotifyFilter) -> Result<(), RepositoryError>
+pub(crate) async fn update<'e, E>(executor: E, filter: &NotifyFilter) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -124,7 +124,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn delete<'e, E>(executor: E, id: FilterId) -> Result<(), RepositoryError>
+pub(crate) async fn delete<'e, E>(executor: E, id: FilterId) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -140,7 +140,7 @@ pub(crate) async fn replace_all_for_group(
   tx: &mut Transaction<'_, Postgres>,
   group_id: GroupId,
   filters: &[NotifyFilter],
-) -> Result<(), RepositoryError> {
+) -> RepositoryResult<()> {
   delete_by_group_id(&mut **tx, group_id).await?;
 
   for filter in filters {
@@ -153,7 +153,7 @@ pub(crate) async fn replace_all_for_group(
 pub(crate) async fn delete_by_group_id<'e, E>(
   executor: E,
   group_id: GroupId,
-) -> Result<(), RepositoryError>
+) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {

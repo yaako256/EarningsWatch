@@ -1,7 +1,7 @@
 // backend/crates/infra/src/postgres/queries/notify_discord_config.rs
 
 use identity::GroupId;
-use repository::{NotifyDiscordConfigRow, RepositoryError};
+use repository::{NotifyDiscordConfigRow, RepositoryResult};
 use sqlx::{Executor, Postgres};
 
 use crate::error_mapping::map_error;
@@ -9,7 +9,7 @@ use crate::error_mapping::map_error;
 pub(crate) async fn find_by_group_id<'e, E>(
   executor: E,
   group_id: GroupId,
-) -> Result<Option<NotifyDiscordConfigRow>, RepositoryError>
+) -> RepositoryResult<Option<NotifyDiscordConfigRow>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -36,7 +36,7 @@ pub(crate) async fn upsert<'e, E>(
   executor: E,
   group_id: GroupId,
   row: &NotifyDiscordConfigRow,
-) -> Result<(), RepositoryError>
+) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {

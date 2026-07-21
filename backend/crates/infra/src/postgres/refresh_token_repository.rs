@@ -11,7 +11,7 @@ use uuid::Uuid;
 // 内部ライブラリ
 use auth::RefreshToken;
 use identity::{RefreshTokenId, UserId};
-use repository::{RefreshTokenRepository, RepositoryError};
+use repository::{RefreshTokenRepository, RepositoryResult};
 
 // 自クレート
 use crate::error_mapping::{map_conflict_error, map_error};
@@ -52,10 +52,7 @@ impl From<RefreshTokenRow> for RefreshToken {
 
 #[async_trait]
 impl RefreshTokenRepository for PgRefreshTokenRepository {
-  async fn find_by_token_hash(
-    &self,
-    token_hash: &str,
-  ) -> Result<Option<RefreshToken>, RepositoryError> {
+  async fn find_by_token_hash(&self, token_hash: &str) -> RepositoryResult<Option<RefreshToken>> {
     let row = sqlx::query_as!(
       RefreshTokenRow,
       r#"
@@ -71,7 +68,7 @@ impl RefreshTokenRepository for PgRefreshTokenRepository {
     Ok(row.map(RefreshToken::from))
   }
 
-  async fn list_by_user_id(&self, user_id: UserId) -> Result<Vec<RefreshToken>, RepositoryError> {
+  async fn list_by_user_id(&self, user_id: UserId) -> RepositoryResult<Vec<RefreshToken>> {
     let rows = sqlx::query_as!(
       RefreshTokenRow,
       r#"
@@ -87,7 +84,7 @@ impl RefreshTokenRepository for PgRefreshTokenRepository {
     Ok(rows.into_iter().map(RefreshToken::from).collect())
   }
 
-  async fn insert(&self, token: &RefreshToken) -> Result<(), RepositoryError> {
+  async fn insert(&self, token: &RefreshToken) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO refresh_tokens (id, user_id, token_hash, user_agent, expires_at, created_at, revoked_at)
@@ -107,7 +104,7 @@ impl RefreshTokenRepository for PgRefreshTokenRepository {
     Ok(())
   }
 
-  async fn revoke(&self, id: RefreshTokenId) -> Result<(), RepositoryError> {
+  async fn revoke(&self, id: RefreshTokenId) -> RepositoryResult<()> {
     sqlx::query!(
       "UPDATE refresh_tokens SET revoked_at = now() WHERE id = $1",
       id.as_uuid()
@@ -119,7 +116,7 @@ impl RefreshTokenRepository for PgRefreshTokenRepository {
     Ok(())
   }
 
-  async fn revoke_all_for_user(&self, user_id: UserId) -> Result<(), RepositoryError> {
+  async fn revoke_all_for_user(&self, user_id: UserId) -> RepositoryResult<()> {
     sqlx::query!(
       "UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL",
       user_id.as_uuid()

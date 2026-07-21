@@ -1,7 +1,7 @@
 // backend/crates/infra/src/postgres/queries/notify_queue.rs
 
 use earnings::{EarningsEvaluation, EarningsSource};
-use repository::RepositoryError;
+use repository::{RepositoryError, RepositoryResult};
 use sqlx::{Executor, Postgres, Transaction};
 use subscription::{NotifyQueueEntry, NotifyStatus};
 
@@ -61,7 +61,7 @@ impl TryFrom<NotifyQueueRow> for NotifyQueueEntry {
   }
 }
 
-pub(crate) async fn insert_monitor_marker<'e, E>(executor: E) -> Result<(), RepositoryError>
+pub(crate) async fn insert_monitor_marker<'e, E>(executor: E) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -77,7 +77,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn delete_monitor_marker<'e, E>(executor: E) -> Result<(), RepositoryError>
+pub(crate) async fn delete_monitor_marker<'e, E>(executor: E) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -88,7 +88,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn monitor_marker_exists<'e, E>(executor: E) -> Result<bool, RepositoryError>
+pub(crate) async fn monitor_marker_exists<'e, E>(executor: E) -> RepositoryResult<bool>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -102,7 +102,7 @@ where
   Ok(count > 0)
 }
 
-pub(crate) async fn list_ready<'e, E>(executor: E) -> Result<Vec<NotifyQueueEntry>, RepositoryError>
+pub(crate) async fn list_ready<'e, E>(executor: E) -> RepositoryResult<Vec<NotifyQueueEntry>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -129,7 +129,7 @@ pub(crate) async fn update_status<'e, E>(
   executor: E,
   id: i64,
   status: NotifyStatus,
-) -> Result<(), RepositoryError>
+) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -145,7 +145,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn delete_data_rows<'e, E>(executor: E) -> Result<(), RepositoryError>
+pub(crate) async fn delete_data_rows<'e, E>(executor: E) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -160,7 +160,7 @@ where
 pub(crate) async fn insert_data_row<'e, E>(
   executor: E,
   entry: &NotifyQueueEntry,
-) -> Result<(), RepositoryError>
+) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -193,7 +193,7 @@ where
 pub(crate) async fn replace_data_rows(
   tx: &mut Transaction<'_, Postgres>,
   entries: &[NotifyQueueEntry],
-) -> Result<(), RepositoryError> {
+) -> RepositoryResult<()> {
   delete_data_rows(&mut **tx).await?;
 
   for entry in entries {

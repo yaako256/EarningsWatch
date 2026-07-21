@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::GroupId;
-use repository::{NotifyHistoryRepository, RepositoryError};
+use repository::{NotifyHistoryRepository, RepositoryResult};
 use subscription::{NotifyHistoryEntry, NotifyStatus};
 
 // 自クレート
@@ -48,7 +48,7 @@ impl From<NotifyHistoryRow> for NotifyHistoryEntry {
 
 #[async_trait]
 impl NotifyHistoryRepository for PgNotifyHistoryRepository {
-  async fn insert(&self, entry: &NotifyHistoryEntry) -> Result<(), RepositoryError> {
+  async fn insert(&self, entry: &NotifyHistoryEntry) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO notify_history (group_id, fingerprint, sent_at, status)
@@ -71,7 +71,7 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
     group_id: GroupId,
     page: u32,
     per_page: u32,
-  ) -> Result<(Vec<NotifyHistoryEntry>, i64), RepositoryError> {
+  ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)> {
     let limit = per_page as i64;
     let offset = page.saturating_sub(1) as i64 * limit;
 
@@ -108,7 +108,7 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
     &self,
     page: u32,
     per_page: u32,
-  ) -> Result<(Vec<NotifyHistoryEntry>, i64), RepositoryError> {
+  ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)> {
     let limit = per_page as i64;
     let offset = page.saturating_sub(1) as i64 * limit;
 
