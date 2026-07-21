@@ -13,7 +13,7 @@ scraper = { path = "../scraper" }
 repository = { path = "../repository" }
 identity = { path = "../identity" }
 crypto = { path = "../crypto" }
-config = { path = "../config" }
+config = { path = "../config", package = "config-loader" }  # 命名回避策
 
 serde = { workspace = true }
 serde_json = { workspace = true }

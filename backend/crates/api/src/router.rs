@@ -10,7 +10,7 @@ use axum::{
 };
 
 // 自クレート
-use crate::handlers::{auth, filter, group, health};
+use crate::handlers::{auth, earnings, filter, group, health};
 use crate::state::AppState;
 
 pub fn build_router(state: AppState) -> Router {
@@ -60,5 +60,17 @@ pub fn build_router(state: AppState) -> Router {
     .route("/api/filters/bulk-enable", post(filter::bulk_enable))
     .route("/api/filters/bulk-disable", post(filter::bulk_disable))
     .route("/api/filters/bulk-delete", post(filter::bulk_delete))
+    // インポート/エクスポート
+    .route("/api/filters/import", post(filter::import_filters))
+    .route(
+      "/api/groups/:id/filters/import",
+      post(filter::import_group_filters),
+    )
+    .route("/api/filters/export", get(filter::export_filters))
+    .route(
+      "/api/groups/:id/filters/export",
+      get(filter::export_group_filters),
+    )
+    .route("/api/earnings/export", get(earnings::export_earnings))
     .with_state(state)
 }

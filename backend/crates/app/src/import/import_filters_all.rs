@@ -174,7 +174,7 @@ pub async fn import_filters_all(
       };
 
       unit_of_work
-        .execute(move |scope: &mut dyn RepositoryScope| {
+        .execute(Box::new(move |scope: &mut dyn RepositoryScope| {
           Box::pin(async move {
             scope.notify_group_repository().insert(&new_group).await?;
             scope
@@ -200,9 +200,10 @@ pub async fn import_filters_all(
                 },
               )
               .await?;
+
             Ok(())
           })
-        })
+        }))
         .await?;
     }
 

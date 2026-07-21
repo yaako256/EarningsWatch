@@ -9,7 +9,10 @@ app::bulk_filter_actionが所有者チェックを行わない設計のため、
 
 // 外部クレート
 use axum::Json;
+use axum::body::Bytes;
 use axum::extract::{Path, Query, State};
+use axum::http::header;
+use axum::response::IntoResponse;
 
 // 内部ライブラリ
 use identity::{FilterId, GroupId};
@@ -18,7 +21,7 @@ use serde::{Deserialize, Serialize};
 // 自クレート
 use crate::error::ApiAppError;
 use crate::extractor::AuthUser;
-use crate::handlers::common::FilterResponse;
+use crate::handlers::common::{ExportFormat, FilterResponse, GroupRef};
 use crate::response::{ApiResponse, Page};
 use crate::state::AppState;
 
@@ -267,4 +270,225 @@ pub async fn bulk_delete(
   Ok(Json(ApiResponse::ok(BulkFilterActionResponse {
     updated_count,
   })))
+}
+
+// ─── POST /api/filters/import(全体一括設定) ───
+#[derive(Deserialize)]
+pub struct ImportFilterRow {
+  pub ticker: String,
+  pub company_name: String,
+  pub group_name: String,
+  pub notes: Option<String>,
+  pub enabled: Option<bool>,
+}
+
+#[derive(Deserialize)]
+pub struct ImportFiltersRequest {
+  pub rows: Vec<ImportFilterRow>,
+  #[serde(default)]
+  pub dry_run: bool,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportErrorRow {
+  pub row_number: u32,
+  pub reason: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportWarning {
+  pub row_number: u32,
+  pub message: String,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ImportFiltersResponse {
+  pub imported_count: u32,
+  pub skipped_empty_rows: u32,
+  pub duplicate_count: u32,
+  pub error_rows: Vec<ImportErrorRow>,
+  pub created_groups: Vec<GroupRef>,
+  pub paused_groups: Vec<GroupRef>,
+  pub warnings: Vec<ImportWarning>,
+}
+
+impl From<app::ImportFiltersResult> for ImportFiltersResponse {
+  fn from(r: app::ImportFiltersResult) -> Self {
+    Self {
+      imported_count: r.imported_count,
+      skipped_empty_rows: r.skipped_empty_rows,
+      duplicate_count: r.duplicate_count,
+      error_rows: r
+        .error_rows
+        .into_iter()
+        .map(|e| ImportErrorRow {
+          row_number: e.row_number,
+          reason: e.reason,
+        })
+        .collect(),
+      created_groups: r
+        .created_groups
+        .into_iter()
+        .map(|g| GroupRef {
+          id: g.id,
+          name: g.name,
+        })
+        .collect(),
+      paused_groups: r
+        .paused_groups
+        .into_iter()
+        .map(|g| GroupRef {
+          id: g.id,
+          name: g.name,
+        })
+        .collect(),
+      warnings: r
+        .warnings
+        .into_iter()
+        .map(|w| ImportWarning {
+          row_number: w.row_number,
+          message: w.message,
+        })
+        .collect(),
+    }
+  }
+}
+
+pub async fn import_filters(
+  State(state): State<AppState>,
+  auth_user: AuthUser,
+  Json(body): Json<ImportFiltersRequest>,
+) -> Result<Json<ApiResponse<ImportFiltersResponse>>, ApiAppError> {
+  let rows = body
+    .rows
+    .into_iter()
+    .map(|r| app::ImportFilterRowInput {
+      ticker: r.ticker,
+      company_name: r.company_name,
+      group_name: r.group_name,
+      notes: r.notes,
+      enabled: r.enabled,
+    })
+    .collect();
+
+  let result = app::import_filters_all(
+    state.notify_group_repository.as_ref(),
+    state.notify_filter_repository.as_ref(),
+    state.unit_of_work.as_ref(),
+    &state.import_settings,
+    auth_user.user_id,
+    rows,
+    body.dry_run,
+  )
+  .await?;
+
+  Ok(Json(ApiResponse::ok(ImportFiltersResponse::from(result))))
+}
+
+// ─── POST /api/groups/{id}/filters/import(グループ単位) ───
+#[derive(Deserialize)]
+pub struct ImportGroupFilterRow {
+  pub ticker: String,
+  pub company_name: String,
+  pub notes: Option<String>,
+  pub enabled: Option<bool>,
+}
+
+#[derive(Deserialize)]
+pub struct ImportGroupFiltersRequest {
+  pub rows: Vec<ImportGroupFilterRow>,
+  #[serde(default)]
+  pub dry_run: bool,
+}
+
+pub async fn import_group_filters(
+  State(state): State<AppState>,
+  auth_user: AuthUser,
+  Path(group_id): Path<GroupId>,
+  Json(body): Json<ImportGroupFiltersRequest>,
+) -> Result<Json<ApiResponse<ImportFiltersResponse>>, ApiAppError> {
+  let rows = body
+    .rows
+    .into_iter()
+    .map(|r| app::ImportGroupFilterRowInput {
+      ticker: r.ticker,
+      company_name: r.company_name,
+      notes: r.notes,
+      enabled: r.enabled,
+    })
+    .collect();
+
+  let result = app::import_filters_for_group(
+    state.notify_group_repository.as_ref(),
+    state.notify_filter_repository.as_ref(),
+    &state.import_settings,
+    auth_user.user_id,
+    group_id,
+    rows,
+    body.dry_run,
+  )
+  .await?;
+
+  Ok(Json(ApiResponse::ok(ImportFiltersResponse::from(result))))
+}
+
+// ─── GET /api/filters/export, /api/groups/{id}/filters/export ───
+#[derive(Deserialize)]
+pub struct ExportFiltersQuery {
+  pub format: ExportFormat,
+}
+
+fn xlsx_response(bytes: Vec<u8>, filename: &str) -> impl IntoResponse {
+  (
+    [
+      (
+        header::CONTENT_TYPE,
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".to_string(),
+      ),
+      (
+        header::CONTENT_DISPOSITION,
+        format!("attachment; filename=\"{filename}\""),
+      ),
+    ],
+    Bytes::from(bytes),
+  )
+}
+
+pub async fn export_filters(
+  State(state): State<AppState>,
+  auth_user: AuthUser,
+  Query(query): Query<ExportFiltersQuery>,
+) -> Result<impl IntoResponse, ApiAppError> {
+  let ExportFormat::Xlsx = query.format; // MVPではxlsxのみ(将来csv追加時はmatchに変更)
+
+  let bytes = app::export_filters_all(
+    state.notify_group_repository.as_ref(),
+    state.notify_filter_repository.as_ref(),
+    auth_user.user_id,
+  )
+  .await?;
+
+  Ok(xlsx_response(bytes, "filters.xlsx"))
+}
+
+pub async fn export_group_filters(
+  State(state): State<AppState>,
+  auth_user: AuthUser,
+  Path(group_id): Path<GroupId>,
+  Query(query): Query<ExportFiltersQuery>,
+) -> Result<impl IntoResponse, ApiAppError> {
+  let ExportFormat::Xlsx = query.format;
+
+  let bytes = app::export_filters_for_group(
+    state.notify_group_repository.as_ref(),
+    state.notify_filter_repository.as_ref(),
+    auth_user.user_id,
+    group_id,
+  )
+  .await?;
+
+  Ok(xlsx_response(bytes, "group_filters.xlsx"))
 }

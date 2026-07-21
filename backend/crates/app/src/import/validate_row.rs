@@ -11,7 +11,7 @@ pub struct NormalizedRow {
   pub company_name: String,
   pub notes: Option<String>,
   pub enabled: bool,
-  pub enabled_was_missing: bool,
+  // pub enabled_was_missing: bool, // 使われて無さそうだったのでコメントアウト
 }
 
 pub enum RowOutcome {
@@ -104,7 +104,7 @@ pub fn classify_row(
       company_name,
       notes,
       enabled: enabled.unwrap_or(true), // 未入力はtrue扱い
-      enabled_was_missing,
+                                        // enabled_was_missing,
     },
     warnings,
   }

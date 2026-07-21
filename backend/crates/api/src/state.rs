@@ -4,11 +4,12 @@ backend/crates/api/src/state.rs
 */
 
 // 外部クレート
+use config::ImportSettings;
 use std::sync::Arc;
 
 // 内部ライブラリ
 use repository::{
-  NotifyDiscordConfigRepository, NotifyFilterRepository, NotifyGroupRepository,
+  EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository, NotifyGroupRepository,
   NotifySlackConfigRepository, RefreshTokenRepository, UserRepository,
 };
 
@@ -17,6 +18,7 @@ use repository::{
 pub struct AppState {
   pub user_repository: Arc<dyn UserRepository>,
   pub refresh_token_repository: Arc<dyn RefreshTokenRepository>,
+  pub earnings_repository: Arc<dyn EarningsRepository>,
   pub notify_group_repository: Arc<dyn NotifyGroupRepository>,
   pub notify_discord_config_repository: Arc<dyn NotifyDiscordConfigRepository>,
   pub notify_slack_config_repository: Arc<dyn NotifySlackConfigRepository>,
@@ -27,4 +29,5 @@ pub struct AppState {
   pub refresh_token_ttl_days: i64,
   pub cookie_secure: bool,
   pub webhook_enc_key: Vec<u8>, // base64デコード済みの生バイト列
+  pub import_settings: ImportSettings,
 }
