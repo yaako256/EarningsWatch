@@ -18,6 +18,7 @@ pub struct Settings {
   pub scraping: ScrapingSettings,
   pub notifier: NotifierSettings,
   pub import: ImportSettings,
+  pub dashboard: DashboardSettings,
 }
 
 /// サーバ設定
@@ -91,4 +92,19 @@ pub struct ImportSettings {
   pub company_name_max_len: usize,
   // 備考の最大文字数
   pub notes_max_len: usize,
+}
+
+/// ダッシュボードの設定
+#[derive(Debug, Clone, Deserialize)]
+pub struct DashboardSettings {
+  // 送信成功の直近n日の定義
+  pub recent_sent_days: i64,
+  // 送信成功の直近n送信の定義
+  pub recent_sent_min_count: u32,
+  // 送信失敗の直近n日の定義
+  pub recent_failed_days: i64,
+  // 送信失敗の直近n送信の定義
+  pub recent_failed_min_count: u32,
+  // 管理者で実行履歴の直近n回の定義
+  pub admin_recent_runs_count: u32,
 }
