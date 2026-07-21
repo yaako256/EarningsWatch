@@ -11,7 +11,7 @@ use uuid::Uuid;
 // 内部ライブラリ
 use content::{Page, PageKind, PageType};
 use identity::{PageId, UserId};
-use repository::{PageRepository, RepositoryError};
+use repository::{PageRepository, RepositoryError, RepositoryResult};
 
 // 自クレート
 use crate::error_mapping::{map_conflict_error, map_error};
@@ -66,7 +66,7 @@ impl TryFrom<PageRow> for Page {
 
 #[async_trait]
 impl PageRepository for PgPageRepository {
-  async fn find_by_id(&self, id: PageId) -> Result<Option<Page>, RepositoryError> {
+  async fn find_by_id(&self, id: PageId) -> RepositoryResult<Option<Page>> {
     let row = sqlx::query_as!(
       PageRow,
       r#"
@@ -83,7 +83,7 @@ impl PageRepository for PgPageRepository {
     row.map(Page::try_from).transpose()
   }
 
-  async fn list_by_type(&self, page_type: PageType) -> Result<Vec<Page>, RepositoryError> {
+  async fn list_by_type(&self, page_type: PageType) -> RepositoryResult<Vec<Page>> {
     let rows = sqlx::query_as!(
       PageRow,
       r#"
@@ -101,7 +101,7 @@ impl PageRepository for PgPageRepository {
     rows.into_iter().map(Page::try_from).collect()
   }
 
-  async fn insert(&self, page: &Page) -> Result<(), RepositoryError> {
+  async fn insert(&self, page: &Page) -> RepositoryResult<()> {
     let display_order = match &page.kind {
       PageKind::Static { display_order } => Some(*display_order),
       PageKind::Blog => None,
@@ -129,7 +129,7 @@ impl PageRepository for PgPageRepository {
     Ok(())
   }
 
-  async fn update(&self, page: &Page) -> Result<(), RepositoryError> {
+  async fn update(&self, page: &Page) -> RepositoryResult<()> {
     let display_order = match &page.kind {
       PageKind::Static { display_order } => Some(*display_order),
       PageKind::Blog => None,
@@ -155,7 +155,7 @@ impl PageRepository for PgPageRepository {
     Ok(())
   }
 
-  async fn delete(&self, id: PageId) -> Result<(), RepositoryError> {
+  async fn delete(&self, id: PageId) -> RepositoryResult<()> {
     sqlx::query!("DELETE FROM pages WHERE id = $1", id.as_uuid())
       .execute(&self.pool)
       .await
@@ -164,11 +164,7 @@ impl PageRepository for PgPageRepository {
     Ok(())
   }
 
-  async fn update_display_order(
-    &self,
-    id: PageId,
-    display_order: i32,
-  ) -> Result<(), RepositoryError> {
+  async fn update_display_order(&self, id: PageId, display_order: i32) -> RepositoryResult<()> {
     sqlx::query!(
       "UPDATE pages SET display_order = $2 WHERE id = $1",
       id.as_uuid(),

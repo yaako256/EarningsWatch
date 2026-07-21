@@ -2,7 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use identity::{GroupId, UserId};
-use repository::RepositoryError;
+use repository::RepositoryResult;
 use sqlx::{Executor, Postgres};
 use subscription::{NotifyGroup, NotifyMedium};
 use uuid::Uuid;
@@ -36,7 +36,7 @@ impl From<NotifyGroupRow> for NotifyGroup {
 pub(crate) async fn find_by_id<'e, E>(
   executor: E,
   id: GroupId,
-) -> Result<Option<NotifyGroup>, RepositoryError>
+) -> RepositoryResult<Option<NotifyGroup>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -59,7 +59,7 @@ where
 pub(crate) async fn list_by_user_id<'e, E>(
   executor: E,
   user_id: UserId,
-) -> Result<Vec<NotifyGroup>, RepositoryError>
+) -> RepositoryResult<Vec<NotifyGroup>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -80,7 +80,7 @@ where
   Ok(rows.into_iter().map(NotifyGroup::from).collect())
 }
 
-pub(crate) async fn list_all<'e, E>(executor: E) -> Result<Vec<NotifyGroup>, RepositoryError>
+pub(crate) async fn list_all<'e, E>(executor: E) -> RepositoryResult<Vec<NotifyGroup>>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -99,7 +99,7 @@ where
   Ok(rows.into_iter().map(NotifyGroup::from).collect())
 }
 
-pub(crate) async fn insert<'e, E>(executor: E, group: &NotifyGroup) -> Result<(), RepositoryError>
+pub(crate) async fn insert<'e, E>(executor: E, group: &NotifyGroup) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -123,7 +123,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn update<'e, E>(executor: E, group: &NotifyGroup) -> Result<(), RepositoryError>
+pub(crate) async fn update<'e, E>(executor: E, group: &NotifyGroup) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {
@@ -146,7 +146,7 @@ where
   Ok(())
 }
 
-pub(crate) async fn delete<'e, E>(executor: E, id: GroupId) -> Result<(), RepositoryError>
+pub(crate) async fn delete<'e, E>(executor: E, id: GroupId) -> RepositoryResult<()>
 where
   E: Executor<'e, Database = Postgres>,
 {

@@ -21,6 +21,12 @@ pub enum AppError {
   SessionInvalid,
   #[error("トークンの処理に失敗しました")]
   TokenError,
+  #[error("対象が見つかりません")]
+  NotFound,
+  #[error("権限がありません")]
+  Forbidden, //(他ユーザのグループ操作等)
+  #[error("設定の暗号化/復号に失敗しました")]
+  CryptoError,
   #[error(transparent)]
   Repository(#[from] repository::RepositoryError),
 }

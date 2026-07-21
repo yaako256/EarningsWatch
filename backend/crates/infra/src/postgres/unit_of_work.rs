@@ -30,13 +30,15 @@ use tokio::sync::Mutex;
 // 内部ライブラリ
 use repository::{
   BoxFuture, EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository,
-  NotifyGroupRepository, NotifyQueueRepository, RepositoryError, RepositoryScope, UnitOfWork,
+  NotifyGroupRepository, NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError,
+  RepositoryResult, RepositoryScope, UnitOfWork,
 };
 
 // 自クレート
 // クエリ共通化関数
 use super::queries::{
   earnings_query, notify_discord_config, notify_filter, notify_group, notify_queue,
+  notify_slack_config,
 };
 
 /// 1トランザクション内で動く全Repositoryを1つの構造体にまとめ、
@@ -60,7 +62,7 @@ impl NotifyGroupRepository for PgTxRepositories {
   async fn find_by_id(
     &self,
     id: identity::GroupId,
-  ) -> Result<Option<subscription::NotifyGroup>, RepositoryError> {
+  ) -> RepositoryResult<Option<subscription::NotifyGroup>> {
     let mut tx = self.tx.lock().await;
     notify_group::find_by_id(&mut **tx, id).await
   }
@@ -68,27 +70,27 @@ impl NotifyGroupRepository for PgTxRepositories {
   async fn list_by_user_id(
     &self,
     user_id: identity::UserId,
-  ) -> Result<Vec<subscription::NotifyGroup>, RepositoryError> {
+  ) -> RepositoryResult<Vec<subscription::NotifyGroup>> {
     let mut tx = self.tx.lock().await;
     notify_group::list_by_user_id(&mut **tx, user_id).await
   }
 
-  async fn list_all(&self) -> Result<Vec<subscription::NotifyGroup>, RepositoryError> {
+  async fn list_all(&self) -> RepositoryResult<Vec<subscription::NotifyGroup>> {
     let mut tx = self.tx.lock().await;
     notify_group::list_all(&mut **tx).await
   }
 
-  async fn insert(&self, group: &subscription::NotifyGroup) -> Result<(), RepositoryError> {
+  async fn insert(&self, group: &subscription::NotifyGroup) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_group::insert(&mut **tx, group).await
   }
 
-  async fn update(&self, group: &subscription::NotifyGroup) -> Result<(), RepositoryError> {
+  async fn update(&self, group: &subscription::NotifyGroup) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_group::update(&mut **tx, group).await
   }
 
-  async fn delete(&self, id: identity::GroupId) -> Result<(), RepositoryError> {
+  async fn delete(&self, id: identity::GroupId) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_group::delete(&mut **tx, id).await
   }
@@ -99,7 +101,7 @@ impl NotifyDiscordConfigRepository for PgTxRepositories {
   async fn find_by_group_id(
     &self,
     group_id: identity::GroupId,
-  ) -> Result<Option<repository::NotifyDiscordConfigRow>, RepositoryError> {
+  ) -> RepositoryResult<Option<repository::NotifyDiscordConfigRow>> {
     let mut tx = self.tx.lock().await;
     notify_discord_config::find_by_group_id(&mut **tx, group_id).await
   }
@@ -108,18 +110,37 @@ impl NotifyDiscordConfigRepository for PgTxRepositories {
     &self,
     group_id: identity::GroupId,
     row: &repository::NotifyDiscordConfigRow,
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_discord_config::upsert(&mut **tx, group_id, row).await
   }
 }
 
 #[async_trait]
+impl NotifySlackConfigRepository for PgTxRepositories {
+  async fn find_by_group_id(
+    &self,
+    group_id: identity::GroupId,
+  ) -> RepositoryResult<Option<repository::NotifySlackConfigRow>> {
+    let mut tx = self.tx.lock().await;
+    notify_slack_config::find_by_group_id(&mut **tx, group_id).await
+  }
+
+  async fn upsert(
+    &self,
+    group_id: identity::GroupId,
+    row: &repository::NotifySlackConfigRow,
+  ) -> RepositoryResult<()> {
+    let mut tx = self.tx.lock().await;
+    notify_slack_config::upsert(&mut **tx, group_id, row).await
+  }
+}
+#[async_trait]
 impl NotifyFilterRepository for PgTxRepositories {
   async fn find_by_id(
     &self,
     id: identity::FilterId,
-  ) -> Result<Option<subscription::NotifyFilter>, RepositoryError> {
+  ) -> RepositoryResult<Option<subscription::NotifyFilter>> {
     let mut tx = self.tx.lock().await;
     notify_filter::find_by_id(&mut **tx, id).await
   }
@@ -127,22 +148,22 @@ impl NotifyFilterRepository for PgTxRepositories {
   async fn list_by_group_id(
     &self,
     group_id: identity::GroupId,
-  ) -> Result<Vec<subscription::NotifyFilter>, RepositoryError> {
+  ) -> RepositoryResult<Vec<subscription::NotifyFilter>> {
     let mut tx = self.tx.lock().await;
     notify_filter::list_by_group_id(&mut **tx, group_id).await
   }
 
-  async fn insert(&self, filter: &subscription::NotifyFilter) -> Result<(), RepositoryError> {
+  async fn insert(&self, filter: &subscription::NotifyFilter) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_filter::insert(&mut **tx, filter).await
   }
 
-  async fn update(&self, filter: &subscription::NotifyFilter) -> Result<(), RepositoryError> {
+  async fn update(&self, filter: &subscription::NotifyFilter) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_filter::update(&mut **tx, filter).await
   }
 
-  async fn delete(&self, id: identity::FilterId) -> Result<(), RepositoryError> {
+  async fn delete(&self, id: identity::FilterId) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_filter::delete(&mut **tx, id).await
   }
@@ -151,7 +172,7 @@ impl NotifyFilterRepository for PgTxRepositories {
     &self,
     group_id: identity::GroupId,
     filters: &[subscription::NotifyFilter],
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_filter::replace_all_for_group(&mut *tx, group_id, filters).await
   }
@@ -162,12 +183,12 @@ impl EarningsRepository for PgTxRepositories {
   async fn find_by_fingerprint(
     &self,
     fingerprint: &str,
-  ) -> Result<Option<earnings::EarningsRecord>, RepositoryError> {
+  ) -> RepositoryResult<Option<earnings::EarningsRecord>> {
     let mut tx = self.tx.lock().await;
     earnings_query::find_by_fingerprint(&mut **tx, fingerprint).await
   }
 
-  async fn list_recent_fingerprints(&self, limit: u32) -> Result<Vec<String>, RepositoryError> {
+  async fn list_recent_fingerprints(&self, limit: u32) -> RepositoryResult<Vec<String>> {
     let mut tx = self.tx.lock().await;
     earnings_query::list_recent_fingerprints(&mut **tx, limit).await
   }
@@ -176,7 +197,7 @@ impl EarningsRepository for PgTxRepositories {
     &self,
     page: u32,
     per_page: u32,
-  ) -> Result<(Vec<earnings::EarningsRecord>, i64), RepositoryError> {
+  ) -> RepositoryResult<(Vec<earnings::EarningsRecord>, i64)> {
     let mut tx = self.tx.lock().await;
     earnings_query::list(&mut **tx, page, per_page).await
   }
@@ -185,7 +206,7 @@ impl EarningsRepository for PgTxRepositories {
     &self,
     from: chrono::DateTime<chrono::Utc>,
     to: chrono::DateTime<chrono::Utc>,
-  ) -> Result<Vec<(chrono::NaiveDate, i64)>, RepositoryError> {
+  ) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>> {
     let mut tx = self.tx.lock().await;
     earnings_query::count_by_date(&mut **tx, from, to).await
   }
@@ -194,7 +215,7 @@ impl EarningsRepository for PgTxRepositories {
     &self,
     items: &[earnings::Earnings],
     fingerprints: &[String],
-  ) -> Result<Vec<earnings::EarningsRecord>, RepositoryError> {
+  ) -> RepositoryResult<Vec<earnings::EarningsRecord>> {
     let mut tx = self.tx.lock().await;
     earnings_query::insert_many(&mut *tx, items, fingerprints).await
   }
@@ -202,17 +223,17 @@ impl EarningsRepository for PgTxRepositories {
 
 #[async_trait]
 impl NotifyQueueRepository for PgTxRepositories {
-  async fn insert_monitor_marker(&self) -> Result<(), RepositoryError> {
+  async fn insert_monitor_marker(&self) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_queue::insert_monitor_marker(&mut **tx).await
   }
 
-  async fn delete_monitor_marker(&self) -> Result<(), RepositoryError> {
+  async fn delete_monitor_marker(&self) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_queue::delete_monitor_marker(&mut **tx).await
   }
 
-  async fn monitor_marker_exists(&self) -> Result<bool, RepositoryError> {
+  async fn monitor_marker_exists(&self) -> RepositoryResult<bool> {
     let mut tx = self.tx.lock().await;
     notify_queue::monitor_marker_exists(&mut **tx).await
   }
@@ -220,12 +241,12 @@ impl NotifyQueueRepository for PgTxRepositories {
   async fn replace_data_rows(
     &self,
     entries: &[subscription::NotifyQueueEntry],
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_queue::replace_data_rows(&mut *tx, entries).await
   }
 
-  async fn list_ready(&self) -> Result<Vec<subscription::NotifyQueueEntry>, RepositoryError> {
+  async fn list_ready(&self) -> RepositoryResult<Vec<subscription::NotifyQueueEntry>> {
     let mut tx = self.tx.lock().await;
     notify_queue::list_ready(&mut **tx).await
   }
@@ -234,7 +255,7 @@ impl NotifyQueueRepository for PgTxRepositories {
     &self,
     id: i64,
     status: subscription::NotifyStatus,
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_queue::update_status(&mut **tx, id, status).await
   }
@@ -245,6 +266,9 @@ impl RepositoryScope for PgTxRepositories {
     self
   }
   fn notify_discord_config_repository(&mut self) -> &mut dyn NotifyDiscordConfigRepository {
+    self
+  }
+  fn notify_slack_config_repository(&mut self) -> &mut dyn NotifySlackConfigRepository {
     self
   }
   fn notify_filter_repository(&mut self) -> &mut dyn NotifyFilterRepository {
@@ -270,12 +294,12 @@ impl PgUnitOfWork {
 
 #[async_trait]
 impl UnitOfWork for PgUnitOfWork {
-  async fn execute<F>(&self, f: F) -> Result<(), RepositoryError>
-  where
-    F: for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, Result<(), RepositoryError>>
-      + Send
-      + 'static,
-  {
+  async fn execute(
+    &self,
+    f: Box<
+      dyn for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>> + Send,
+    >,
+  ) -> RepositoryResult<()> {
     let tx = self
       .pool
       .begin()

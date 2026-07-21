@@ -14,7 +14,7 @@ use async_trait::async_trait;
 /// 自クレート
 use crate::{
   EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository, NotifyGroupRepository,
-  NotifyQueueRepository, RepositoryResult,
+  NotifyQueueRepository, NotifySlackConfigRepository, RepositoryResult,
 };
 
 /// futuresクレートを新規に追加しないよう
@@ -30,6 +30,7 @@ pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + Send + 'a>>;
 pub trait RepositoryScope: Send {
   fn notify_group_repository(&mut self) -> &mut dyn NotifyGroupRepository;
   fn notify_discord_config_repository(&mut self) -> &mut dyn NotifyDiscordConfigRepository;
+  fn notify_slack_config_repository(&mut self) -> &mut dyn NotifySlackConfigRepository;
   fn notify_filter_repository(&mut self) -> &mut dyn NotifyFilterRepository;
   fn earnings_repository(&mut self) -> &mut dyn EarningsRepository;
   fn notify_queue_repository(&mut self) -> &mut dyn NotifyQueueRepository;
@@ -45,9 +46,10 @@ pub trait RepositoryScope: Send {
 /// 1トランザクションで行う。
 #[async_trait]
 pub trait UnitOfWork: Send + Sync {
-  async fn execute<F>(&self, f: F) -> RepositoryResult<()>
-  where
-    F: for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>>
-      + Send
-      + 'static;
+  async fn execute(
+    &self,
+    f: Box<
+      dyn for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>> + Send,
+    >,
+  ) -> RepositoryResult<()>;
 }

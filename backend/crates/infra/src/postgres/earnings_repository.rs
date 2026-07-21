@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use earnings::{Earnings, EarningsEvaluation, EarningsRecord, EarningsSource};
-use repository::{EarningsRepository, RepositoryError};
+use repository::{EarningsRepository, RepositoryError, RepositoryResult};
 
 // 自クレート
 use super::queries::earnings_query;
@@ -60,19 +60,15 @@ impl EarningsRepository for PgEarningsRepository {
   async fn find_by_fingerprint(
     &self,
     fingerprint: &str,
-  ) -> Result<Option<EarningsRecord>, RepositoryError> {
+  ) -> RepositoryResult<Option<EarningsRecord>> {
     earnings_query::find_by_fingerprint(&self.pool, fingerprint).await
   }
 
-  async fn list_recent_fingerprints(&self, limit: u32) -> Result<Vec<String>, RepositoryError> {
+  async fn list_recent_fingerprints(&self, limit: u32) -> RepositoryResult<Vec<String>> {
     earnings_query::list_recent_fingerprints(&self.pool, limit).await
   }
 
-  async fn list(
-    &self,
-    page: u32,
-    per_page: u32,
-  ) -> Result<(Vec<EarningsRecord>, i64), RepositoryError> {
+  async fn list(&self, page: u32, per_page: u32) -> RepositoryResult<(Vec<EarningsRecord>, i64)> {
     earnings_query::list(&self.pool, page, per_page).await
   }
 
@@ -80,7 +76,7 @@ impl EarningsRepository for PgEarningsRepository {
     &self,
     from: chrono::DateTime<chrono::Utc>,
     to: chrono::DateTime<chrono::Utc>,
-  ) -> Result<Vec<(chrono::NaiveDate, i64)>, RepositoryError> {
+  ) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>> {
     earnings_query::count_by_date(&self.pool, from, to).await
   }
 
@@ -88,7 +84,7 @@ impl EarningsRepository for PgEarningsRepository {
     &self,
     items: &[Earnings],
     fingerprints: &[String],
-  ) -> Result<Vec<EarningsRecord>, RepositoryError> {
+  ) -> RepositoryResult<Vec<EarningsRecord>> {
     if items.len() != fingerprints.len() {
       return Err(RepositoryError::Other(
         "itemsとfingerprintsの件数が一致しません".to_string(),

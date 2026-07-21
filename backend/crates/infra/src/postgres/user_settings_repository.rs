@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use identity::UserId;
-use repository::{RepositoryError, UserSettingsRepository};
+use repository::{RepositoryResult, UserSettingsRepository};
 use subscription::UserSettings;
 
 // 自クレート
@@ -27,10 +27,7 @@ impl PgUserSettingsRepository {
 
 #[async_trait]
 impl UserSettingsRepository for PgUserSettingsRepository {
-  async fn find_by_user_id(
-    &self,
-    user_id: UserId,
-  ) -> Result<Option<UserSettings>, RepositoryError> {
+  async fn find_by_user_id(&self, user_id: UserId) -> RepositoryResult<Option<UserSettings>> {
     let row = sqlx::query!(
       "SELECT user_id, memo, updated_at FROM user_settings WHERE user_id = $1",
       user_id.as_uuid()
@@ -46,7 +43,7 @@ impl UserSettingsRepository for PgUserSettingsRepository {
     }))
   }
 
-  async fn upsert(&self, settings: &UserSettings) -> Result<(), RepositoryError> {
+  async fn upsert(&self, settings: &UserSettings) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO user_settings (user_id, memo, updated_at)

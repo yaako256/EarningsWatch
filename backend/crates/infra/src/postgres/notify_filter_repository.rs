@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::{FilterId, GroupId};
-use repository::{NotifyFilterRepository, RepositoryError};
+use repository::{NotifyFilterRepository, RepositoryResult};
 use subscription::NotifyFilter;
 
 // 自クレート
@@ -53,26 +53,23 @@ impl From<NotifyFilterRow> for NotifyFilter {
 
 #[async_trait]
 impl NotifyFilterRepository for PgNotifyFilterRepository {
-  async fn find_by_id(&self, id: FilterId) -> Result<Option<NotifyFilter>, RepositoryError> {
+  async fn find_by_id(&self, id: FilterId) -> RepositoryResult<Option<NotifyFilter>> {
     notify_filter::find_by_id(&self.pool, id).await
   }
 
-  async fn list_by_group_id(
-    &self,
-    group_id: GroupId,
-  ) -> Result<Vec<NotifyFilter>, RepositoryError> {
+  async fn list_by_group_id(&self, group_id: GroupId) -> RepositoryResult<Vec<NotifyFilter>> {
     notify_filter::list_by_group_id(&self.pool, group_id).await
   }
 
-  async fn insert(&self, filter: &NotifyFilter) -> Result<(), RepositoryError> {
+  async fn insert(&self, filter: &NotifyFilter) -> RepositoryResult<()> {
     notify_filter::insert(&self.pool, filter).await
   }
 
-  async fn update(&self, filter: &NotifyFilter) -> Result<(), RepositoryError> {
+  async fn update(&self, filter: &NotifyFilter) -> RepositoryResult<()> {
     notify_filter::update(&self.pool, filter).await
   }
 
-  async fn delete(&self, id: FilterId) -> Result<(), RepositoryError> {
+  async fn delete(&self, id: FilterId) -> RepositoryResult<()> {
     notify_filter::delete(&self.pool, id).await
   }
 
@@ -80,7 +77,7 @@ impl NotifyFilterRepository for PgNotifyFilterRepository {
     &self,
     group_id: GroupId,
     filters: &[NotifyFilter],
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     // CSVインポートの差分反映(00-overview.md 4章原則4)。DELETE + 一括INSERTを1トランザクションで行う。
     let mut tx = self.pool.begin().await.map_err(map_error)?;
 

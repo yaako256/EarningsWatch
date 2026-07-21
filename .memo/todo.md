@@ -29,6 +29,21 @@ configへ切り出す
 詳細なコメントとかつけ取らん。
 ブラックボックスじゃないけどグレーボックス
 
-# infraクレートのSlack設定
+
+# infraクレートのSlack設定 → やった。解決積み
 Discordはクエリの共通化をしているが、Slackはしていない。
 Slack実装時にそれを変更しなければならないかもしれない。
+
+
+## apiのjson型について → 漏れはあるかもしれないがつけた
+`#[serde(rename_all = "lowercase")]`を付けていかなければいけないかもしれない。
+↓
+`#[serde(rename_all = "camelCase")]`だった。
+JsonAPI系は`camelCase`よく使われる
+以下にする。
+```
+Rust内部: snake_case(ものにより)
+DBカラム: snake_case(ものにより)
+Query Parameter: snake_case(絶対)
+JSON Body: camelCase(絶対)
+```

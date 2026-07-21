@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use earnings::{EarningsEvaluation, EarningsSource};
-use repository::{NotifyQueueRepository, RepositoryError};
+use repository::{NotifyQueueRepository, RepositoryError, RepositoryResult};
 use subscription::{NotifyQueueEntry, NotifyStatus};
 
 // 自クレート
@@ -83,19 +83,19 @@ impl TryFrom<NotifyQueueRow> for NotifyQueueEntry {
 
 #[async_trait]
 impl NotifyQueueRepository for PgNotifyQueueRepository {
-  async fn insert_monitor_marker(&self) -> Result<(), RepositoryError> {
+  async fn insert_monitor_marker(&self) -> RepositoryResult<()> {
     notify_queue::insert_monitor_marker(&self.pool).await
   }
 
-  async fn delete_monitor_marker(&self) -> Result<(), RepositoryError> {
+  async fn delete_monitor_marker(&self) -> RepositoryResult<()> {
     notify_queue::delete_monitor_marker(&self.pool).await
   }
 
-  async fn monitor_marker_exists(&self) -> Result<bool, RepositoryError> {
+  async fn monitor_marker_exists(&self) -> RepositoryResult<bool> {
     notify_queue::monitor_marker_exists(&self.pool).await
   }
 
-  async fn replace_data_rows(&self, entries: &[NotifyQueueEntry]) -> Result<(), RepositoryError> {
+  async fn replace_data_rows(&self, entries: &[NotifyQueueEntry]) -> RepositoryResult<()> {
     let mut tx = self.pool.begin().await.map_err(map_error)?;
 
     notify_queue::replace_data_rows(&mut tx, entries).await?;
@@ -105,11 +105,11 @@ impl NotifyQueueRepository for PgNotifyQueueRepository {
     Ok(())
   }
 
-  async fn list_ready(&self) -> Result<Vec<NotifyQueueEntry>, RepositoryError> {
+  async fn list_ready(&self) -> RepositoryResult<Vec<NotifyQueueEntry>> {
     notify_queue::list_ready(&self.pool).await
   }
 
-  async fn update_status(&self, id: i64, status: NotifyStatus) -> Result<(), RepositoryError> {
+  async fn update_status(&self, id: i64, status: NotifyStatus) -> RepositoryResult<()> {
     notify_queue::update_status(&self.pool, id, status).await
   }
 }

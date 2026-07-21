@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 // 内部ライブラリ
 use identity::{GroupId, UserId};
-use repository::{NotifyGroupRepository, RepositoryError};
+use repository::{NotifyGroupRepository, RepositoryResult};
 use subscription::{NotifyGroup, NotifyMedium};
 
 // 自クレート
@@ -52,27 +52,27 @@ impl From<NotifyGroupRow> for NotifyGroup {
 
 #[async_trait]
 impl NotifyGroupRepository for PgNotifyGroupRepository {
-  async fn find_by_id(&self, id: GroupId) -> Result<Option<NotifyGroup>, RepositoryError> {
+  async fn find_by_id(&self, id: GroupId) -> RepositoryResult<Option<NotifyGroup>> {
     notify_group::find_by_id(&self.pool, id).await
   }
 
-  async fn list_by_user_id(&self, user_id: UserId) -> Result<Vec<NotifyGroup>, RepositoryError> {
+  async fn list_by_user_id(&self, user_id: UserId) -> RepositoryResult<Vec<NotifyGroup>> {
     notify_group::list_by_user_id(&self.pool, user_id).await
   }
 
-  async fn list_all(&self) -> Result<Vec<NotifyGroup>, RepositoryError> {
+  async fn list_all(&self) -> RepositoryResult<Vec<NotifyGroup>> {
     notify_group::list_all(&self.pool).await
   }
 
-  async fn insert(&self, group: &NotifyGroup) -> Result<(), RepositoryError> {
+  async fn insert(&self, group: &NotifyGroup) -> RepositoryResult<()> {
     notify_group::insert(&self.pool, group).await
   }
 
-  async fn update(&self, group: &NotifyGroup) -> Result<(), RepositoryError> {
+  async fn update(&self, group: &NotifyGroup) -> RepositoryResult<()> {
     notify_group::update(&self.pool, group).await
   }
 
-  async fn delete(&self, id: GroupId) -> Result<(), RepositoryError> {
+  async fn delete(&self, id: GroupId) -> RepositoryResult<()> {
     notify_group::delete(&self.pool, id).await
   }
 }

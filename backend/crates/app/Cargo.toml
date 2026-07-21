@@ -12,8 +12,12 @@ notifier = { path = "../notifier" }
 scraper = { path = "../scraper" }
 repository = { path = "../repository" }
 identity = { path = "../identity" }
+crypto = { path = "../crypto" }
 
 serde = { workspace = true }
+serde_json = { workspace = true }
 chrono = { workspace = true }
 thiserror = { workspace = true }
 async-trait = { workspace = true }
+
+reqwest = { workspace = true }

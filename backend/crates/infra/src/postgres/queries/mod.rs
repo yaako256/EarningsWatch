@@ -8,3 +8,4 @@ pub(crate) mod notify_discord_config;
 pub(crate) mod notify_filter;
 pub(crate) mod notify_group;
 pub(crate) mod notify_queue;
+pub(crate) mod notify_slack_config;

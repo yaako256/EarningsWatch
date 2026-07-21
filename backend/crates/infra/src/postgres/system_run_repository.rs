@@ -8,7 +8,7 @@ use async_trait::async_trait;
 use sqlx::PgPool;
 
 // 内部ライブラリ
-use repository::{RepositoryError, SystemRunRepository};
+use repository::{RepositoryResult, SystemRunRepository};
 
 // 自クレート
 use crate::error_mapping::map_error;
@@ -30,7 +30,7 @@ impl SystemRunRepository for PgSystemRunRepository {
     run_at: chrono::DateTime<chrono::Utc>,
     duration_ms: i32,
     new_earnings_count: i32,
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO system_runs (run_type, run_at, duration_ms, new_earnings_count)
@@ -53,7 +53,7 @@ impl SystemRunRepository for PgSystemRunRepository {
     duration_ms: i32,
     total_send_count: i32,
     success_send_count: i32,
-  ) -> Result<(), RepositoryError> {
+  ) -> RepositoryResult<()> {
     sqlx::query!(
       r#"
       INSERT INTO system_runs (run_type, run_at, duration_ms, total_send_count, success_send_count)
