@@ -8,7 +8,9 @@ HTTPサーバの起動とDI組み立てをする
 use std::sync::Arc;
 
 // 外部ライブラリ
-// トレイト型ロードのためにuse
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
+// トレイト型ロードのためにpreludeでuse
 use tracing_subscriber::prelude::*;
 
 #[tokio::main]
@@ -16,14 +18,11 @@ async fn main() {
   // 設定の読み込み
   let settings = config::load().expect("failed to load config");
 
-  // デバッグ用にsettingsを出力
-  // println!("{:#?}", settings);
-
   // server起動時はSqlLayerのみ登録
   let (sql_layer, _writer_handle) =
     logging::SqlLayer::new(logging::LogProcess::Server, logging::ConsoleSink);
 
-  // レイヤの追加
+  // ロギング設定: レイヤの追加
   tracing_subscriber::registry()
     // ログレベルの設定(デフォルトでdebug)
     .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "debug".into()))
@@ -38,6 +37,11 @@ async fn main() {
     .await
     .expect("failed to connect to database");
 
+  // webhook_enc_keyはAppState構築時に1回だけbase64デコード
+  let webhook_enc_key = STANDARD
+    .decode(&settings.security.webhook_enc_key)
+    .expect("EARNINGSWATCH__SECURITY__WEBHOOK_ENC_KEYのbase64デコードに失敗しました");
+
   // ----------------
   // Stateの組み立て
   // ----------------
@@ -46,15 +50,31 @@ async fn main() {
     Arc::new(infra::PgUserRepository::new(pool.clone()));
   let refresh_token_repository: Arc<dyn repository::RefreshTokenRepository> =
     Arc::new(infra::PgRefreshTokenRepository::new(pool.clone()));
+  let notify_group_repository: Arc<dyn repository::NotifyGroupRepository> =
+    Arc::new(infra::PgNotifyGroupRepository::new(pool.clone()));
+  let notify_discord_config_repository: Arc<dyn repository::NotifyDiscordConfigRepository> =
+    Arc::new(infra::PgNotifyDiscordConfigRepository::new(pool.clone()));
+  let notify_slack_config_repository: Arc<dyn repository::NotifySlackConfigRepository> =
+    Arc::new(infra::PgNotifySlackConfigRepository::new(pool.clone()));
+  let notify_filter_repository: Arc<dyn repository::NotifyFilterRepository> =
+    Arc::new(infra::PgNotifyFilterRepository::new(pool.clone()));
+  let unit_of_work: Arc<dyn repository::UnitOfWork> =
+    Arc::new(infra::PgUnitOfWork::new(pool.clone()));
 
   // AppStateにまとめる
   let state = api::state::AppState {
     user_repository,
     refresh_token_repository,
+    notify_group_repository,
+    notify_discord_config_repository,
+    notify_slack_config_repository,
+    notify_filter_repository,
+    unit_of_work,
     jwt_secret: settings.jwt.secret.clone(),
     access_token_ttl_minutes: settings.jwt.access_token_ttl_minutes,
     refresh_token_ttl_days: settings.jwt.refresh_token_ttl_days,
     cookie_secure: settings.cookie.secure,
+    webhook_enc_key,
   };
 
   // ルータ組み立て
@@ -68,7 +88,7 @@ async fn main() {
     .await
     .expect("failed to bind address");
 
-  // デバッグ: SqlLayerの動作確認
+  // デバッグ: SqlLayerログの動作確認
   // for i in 1..=50 - 2 - 4 {
   //   tracing::info!(index = i, "SqlLayer test");
   // }
