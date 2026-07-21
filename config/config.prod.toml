@@ -29,3 +29,8 @@ recent_fingerprint_limit = 100
 
 [notifier]
 default_embed_color = "0x87CEEB"
+
+[import]
+ticker_max_len = 20
+company_name_max_len = 50
+notes_max_len = 500

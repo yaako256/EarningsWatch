@@ -17,6 +17,7 @@ pub struct Settings {
   pub logging: LoggingSettings,
   pub scraping: ScrapingSettings,
   pub notifier: NotifierSettings,
+  pub import: ImportSettings,
 }
 
 /// サーバ設定
@@ -79,4 +80,15 @@ pub struct ScrapingSettings {
 pub struct NotifierSettings {
   /// discordのembedで使用する標準色 EmbedColor::DEFAULT (規定: 水色0x87CEEB)
   pub default_embed_color: String,
+}
+
+/// CSV/Excelインポートの設定
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportSettings {
+  // 証券コードの最大文字数
+  pub ticker_max_len: usize,
+  // 銘柄名の最大文字数
+  pub company_name_max_len: usize,
+  // 備考の最大文字数
+  pub notes_max_len: usize,
 }
