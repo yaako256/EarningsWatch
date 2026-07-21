@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// 送信媒体の列挙型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "notify_medium", rename_all = "lowercase")]
 pub enum NotifyMedium {
   Discord,

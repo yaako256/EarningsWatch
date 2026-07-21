@@ -122,14 +122,16 @@ pub async fn resume_group(
 
 // ─── GET/PUT /api/groups/{id}/config ───
 #[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(tag = "medium", rename_all = "lowercase")]
+#[serde(tag = "medium", rename_all = "camelCase")]
 pub enum GroupConfigDto {
+  #[serde(rename_all = "camelCase")]
   Discord {
     webhook_url: Option<String>,
     embed_color: Option<String>,
     mention_enabled: bool,
     mention_targets: Vec<String>,
   },
+  #[serde(rename_all = "camelCase")]
   Slack {
     webhook_url: Option<String>,
     mention_enabled: bool,

@@ -37,3 +37,7 @@
 次はphase8
 
 # 2026年07月21日
+- phase8の通知系apiを作った。
+
+camelCaseとかの問題がめんどい。
+次はphase9。
