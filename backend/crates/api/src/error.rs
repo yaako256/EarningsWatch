@@ -59,6 +59,10 @@ impl From<app::AppError> for ApiAppError {
         ApiErrorCode::InternalError,
         "内部エラーが発生しました".to_string(),
       ),
+      app::AppError::ImportEmpty => ApiAppError(
+        ApiErrorCode::ImportEmpty,
+        "インポート対象の行が1件もありません".to_string(),
+      ),
     }
   }
 }

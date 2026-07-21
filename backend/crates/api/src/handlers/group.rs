@@ -6,10 +6,10 @@ backend/crates/api/src/handlers/group.rs
 // 外部クレート
 use axum::Json;
 use axum::extract::{Path, State};
+use serde::{Deserialize, Serialize};
 
 // 内部ライブラリ
 use identity::GroupId;
-use serde::{Deserialize, Serialize};
 use subscription::NotifyMedium;
 
 // 自クレート

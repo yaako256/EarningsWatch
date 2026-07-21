@@ -5,10 +5,10 @@ backend/crates/api/src/handlers/common.rs
 
 // 外部クレート
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 // 内部ライブラリ
 use identity::{FilterId, GroupId};
-use serde::Serialize;
 use subscription::{NotifyFilter, NotifyGroup, NotifyMedium};
 
 #[derive(Serialize)]
@@ -64,4 +64,12 @@ impl From<NotifyFilter> for FilterResponse {
 pub struct GroupRef {
   pub id: GroupId,
   pub name: String,
+}
+
+// 決算情報・フィルタのエクスポートで共有するformat指定。
+// MVPではxlsxのみ対応(CSV対応は将来拡張)。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum ExportFormat {
+  Xlsx,
 }

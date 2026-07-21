@@ -60,6 +60,8 @@ async fn main() {
     Arc::new(infra::PgNotifyFilterRepository::new(pool.clone()));
   let unit_of_work: Arc<dyn repository::UnitOfWork> =
     Arc::new(infra::PgUnitOfWork::new(pool.clone()));
+  let earnings_repository: Arc<dyn repository::EarningsRepository> =
+    Arc::new(infra::PgEarningsRepository::new(pool.clone()));
 
   // AppStateにまとめる
   let state = api::state::AppState {
@@ -75,6 +77,8 @@ async fn main() {
     refresh_token_ttl_days: settings.jwt.refresh_token_ttl_days,
     cookie_secure: settings.cookie.secure,
     webhook_enc_key,
+    earnings_repository,
+    import_settings: settings.import.clone(),
   };
 
   // ルータ組み立て
