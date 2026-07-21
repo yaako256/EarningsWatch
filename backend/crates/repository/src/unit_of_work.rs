@@ -46,9 +46,10 @@ pub trait RepositoryScope: Send {
 /// 1トランザクションで行う。
 #[async_trait]
 pub trait UnitOfWork: Send + Sync {
-  async fn execute<F>(&self, f: F) -> RepositoryResult<()>
-  where
-    F: for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>>
-      + Send
-      + 'static;
+  async fn execute(
+    &self,
+    f: Box<
+      dyn for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>> + Send,
+    >,
+  ) -> RepositoryResult<()>;
 }

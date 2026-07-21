@@ -44,6 +44,17 @@ impl From<app::AppError> for ApiAppError {
         ApiErrorCode::InternalError,
         "トークンの処理に失敗しました".to_string(),
       ),
+      app::AppError::NotFound => {
+        ApiAppError(ApiErrorCode::NotFound, "対象が見つかりません".to_string())
+      }
+      app::AppError::Forbidden => ApiAppError(
+        ApiErrorCode::Forbidden,
+        "この操作を行う権限がありません".to_string(),
+      ),
+      app::AppError::CryptoError => ApiAppError(
+        ApiErrorCode::InternalError,
+        "設定の処理に失敗しました".to_string(),
+      ),
       app::AppError::Repository(_) => ApiAppError(
         ApiErrorCode::InternalError,
         "内部エラーが発生しました".to_string(),

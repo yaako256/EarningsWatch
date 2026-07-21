@@ -10,6 +10,8 @@ auth = { path = "../auth" }
 identity = { path = "../identity" }
 content = { path = "../content" }
 repository = { path = "../repository" }
+subscription = { path = "../subscription" }
+earnings = { path = "../earnings" }
 
 axum = { workspace = true }
 axum-extra = { workspace = true }

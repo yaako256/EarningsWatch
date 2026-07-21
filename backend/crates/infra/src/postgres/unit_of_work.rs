@@ -294,12 +294,12 @@ impl PgUnitOfWork {
 
 #[async_trait]
 impl UnitOfWork for PgUnitOfWork {
-  async fn execute<F>(&self, f: F) -> RepositoryResult<()>
-  where
-    F: for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>>
-      + Send
-      + 'static,
-  {
+  async fn execute(
+    &self,
+    f: Box<
+      dyn for<'a> FnOnce(&'a mut dyn RepositoryScope) -> BoxFuture<'a, RepositoryResult<()>> + Send,
+    >,
+  ) -> RepositoryResult<()> {
     let tx = self
       .pool
       .begin()

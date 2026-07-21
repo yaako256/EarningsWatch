@@ -17,8 +17,8 @@ use crate::AppError;
 // グループ名の最大文字数
 const GROUP_NAME_MAX_LEN: usize = 30;
 
-pub async fn create_group<U: UnitOfWork>(
-  uow: &U,
+pub async fn create_group(
+  uow: &dyn UnitOfWork,
   user_id: UserId,
   name: String,
   medium: NotifyMedium,
@@ -44,7 +44,7 @@ pub async fn create_group<U: UnitOfWork>(
   let group_for_closure = group.clone();
 
   uow
-    .execute(move |scope: &mut dyn RepositoryScope| {
+    .execute(Box::new(move |scope: &mut dyn RepositoryScope| {
       Box::pin(async move {
         scope
           .notify_group_repository()
@@ -78,7 +78,7 @@ pub async fn create_group<U: UnitOfWork>(
 
         Ok(())
       })
-    })
+    }))
     .await?;
 
   Ok(group)
