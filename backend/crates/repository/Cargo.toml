@@ -10,6 +10,7 @@ earnings = { path = "../earnings" }
 subscription = { path = "../subscription" }
 identity = { path = "../identity" }
 content = { path = "../content" }
+logging = { path = "../logging" }
 
 async-trait = { workspace = true }
 thiserror = { workspace = true }

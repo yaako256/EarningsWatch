@@ -7,6 +7,7 @@ SQL・sqlxには依存しない
 
 mod earnings_repository;
 mod error;
+mod log_repository;
 mod notify_config_repository;
 mod notify_filter_repository;
 mod notify_group_repository;
@@ -22,6 +23,7 @@ mod user_settings_repository;
 
 pub use earnings_repository::{EarningsListFilter, EarningsRepository};
 pub use error::{RepositoryError, RepositoryResult};
+pub use log_repository::{ListLogsFilter, LogRepository};
 pub use notify_config_repository::{
   discord::{NotifyDiscordConfigRepository, NotifyDiscordConfigRow},
   slack::{NotifySlackConfigRepository, NotifySlackConfigRow},
