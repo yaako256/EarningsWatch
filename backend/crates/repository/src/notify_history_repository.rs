@@ -8,7 +8,7 @@ use async_trait::async_trait;
 
 // 内部ライブラリ
 use identity::GroupId;
-use subscription::NotifyHistoryEntry;
+use subscription::{NotifyHistoryEntry, NotifyStatus};
 
 // 自クレート
 use crate::RepositoryResult;
@@ -28,4 +28,20 @@ pub trait NotifyHistoryRepository: Send + Sync {
     page: u32,
     per_page: u32,
   ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)>;
+
+  /// user_idが持つ全グループを対象に、指定ステータスかつsince以降の履歴を新しい順で返す。
+  async fn list_recent_by_user_since(
+    &self,
+    user_id: identity::UserId,
+    status: NotifyStatus,
+    since: chrono::DateTime<chrono::Utc>,
+  ) -> RepositoryResult<Vec<NotifyHistoryEntry>>;
+
+  /// user_idが持つ全グループを対象に、指定ステータスの直近N件を日付条件なしで返す。
+  async fn list_recent_by_user_top_n(
+    &self,
+    user_id: identity::UserId,
+    status: NotifyStatus,
+    limit: u32,
+  ) -> RepositoryResult<Vec<NotifyHistoryEntry>>;
 }

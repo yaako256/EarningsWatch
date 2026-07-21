@@ -28,10 +28,11 @@ use sqlx::{PgPool, Postgres, Transaction};
 use tokio::sync::Mutex;
 
 // 内部ライブラリ
+use earnings::EarningsRecord;
 use repository::{
-  BoxFuture, EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository,
-  NotifyGroupRepository, NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError,
-  RepositoryResult, RepositoryScope, UnitOfWork,
+  BoxFuture, EarningsListFilter, EarningsRepository, NotifyDiscordConfigRepository,
+  NotifyFilterRepository, NotifyGroupRepository, NotifyQueueRepository,
+  NotifySlackConfigRepository, RepositoryError, RepositoryResult, RepositoryScope, UnitOfWork,
 };
 
 // 自クレート
@@ -218,6 +219,30 @@ impl EarningsRepository for PgTxRepositories {
   ) -> RepositoryResult<Vec<earnings::EarningsRecord>> {
     let mut tx = self.tx.lock().await;
     earnings_query::insert_many(&mut *tx, items, fingerprints).await
+  }
+
+  async fn list_filtered(
+    &self,
+    filter: &EarningsListFilter,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<EarningsRecord>, i64)> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::list_filtered(&mut **tx, filter, page, per_page).await
+  }
+
+  async fn count_all(&self) -> RepositoryResult<i64> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::count_all(&mut **tx).await
+  }
+
+  async fn summary_daily_counts_jst(
+    &self,
+    from: Option<chrono::DateTime<chrono::Utc>>,
+    to: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::summary_daily_counts_jst(&mut **tx, from, to).await
   }
 }
 

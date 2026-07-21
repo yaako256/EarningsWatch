@@ -136,4 +136,57 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
       total_count,
     ))
   }
+
+  async fn list_recent_by_user_since(
+    &self,
+    user_id: identity::UserId,
+    status: NotifyStatus,
+    since: chrono::DateTime<chrono::Utc>,
+  ) -> RepositoryResult<Vec<NotifyHistoryEntry>> {
+    let rows = sqlx::query_as!(
+      NotifyHistoryRow,
+      r#"
+      SELECT h.id, h.group_id, h.fingerprint, h.sent_at, h.status as "status: NotifyStatus"
+      FROM notify_history h
+      JOIN notify_groups g ON g.id = h.group_id
+      WHERE g.user_id = $1 AND h.status = $2 AND h.sent_at >= $3
+      ORDER BY h.sent_at DESC
+      "#,
+      user_id.as_uuid(),
+      status as NotifyStatus,
+      since
+    )
+    .fetch_all(&self.pool)
+    .await
+    .map_err(map_error)?;
+
+    Ok(rows.into_iter().map(NotifyHistoryEntry::from).collect())
+  }
+
+  async fn list_recent_by_user_top_n(
+    &self,
+    user_id: identity::UserId,
+    status: NotifyStatus,
+    limit: u32,
+  ) -> RepositoryResult<Vec<NotifyHistoryEntry>> {
+    let rows = sqlx::query_as!(
+      NotifyHistoryRow,
+      r#"
+      SELECT h.id, h.group_id, h.fingerprint, h.sent_at, h.status as "status: NotifyStatus"
+      FROM notify_history h
+      JOIN notify_groups g ON g.id = h.group_id
+      WHERE g.user_id = $1 AND h.status = $2
+      ORDER BY h.sent_at DESC
+      LIMIT $3
+      "#,
+      user_id.as_uuid(),
+      status as NotifyStatus,
+      limit as i64
+    )
+    .fetch_all(&self.pool)
+    .await
+    .map_err(map_error)?;
+
+    Ok(rows.into_iter().map(NotifyHistoryEntry::from).collect())
+  }
 }

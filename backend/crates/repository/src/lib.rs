@@ -20,7 +20,7 @@ mod unit_of_work;
 mod user_repository;
 mod user_settings_repository;
 
-pub use earnings_repository::EarningsRepository;
+pub use earnings_repository::{EarningsListFilter, EarningsRepository};
 pub use error::{RepositoryError, RepositoryResult};
 pub use notify_config_repository::{
   discord::{NotifyDiscordConfigRepository, NotifyDiscordConfigRow},

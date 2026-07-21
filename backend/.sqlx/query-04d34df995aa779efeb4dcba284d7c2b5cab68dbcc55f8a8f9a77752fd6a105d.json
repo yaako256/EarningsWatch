@@ -1,0 +1,29 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT (published_at AT TIME ZONE 'Asia/Tokyo')::date as \"date_jst!\", COUNT(*) as \"count!\"\n      FROM earnings\n      WHERE ($1::timestamptz IS NULL OR published_at >= $1)\n        AND ($2::timestamptz IS NULL OR published_at < $2)\n      GROUP BY (published_at AT TIME ZONE 'Asia/Tokyo')::date\n      ORDER BY (published_at AT TIME ZONE 'Asia/Tokyo')::date\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "date_jst!",
+        "type_info": "Date"
+      },
+      {
+        "ordinal": 1,
+        "name": "count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Timestamptz"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "04d34df995aa779efeb4dcba284d7c2b5cab68dbcc55f8a8f9a77752fd6a105d"
+}
