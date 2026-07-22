@@ -210,6 +210,7 @@ pub struct NotifyConfigResponse {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateNotifyConfigRequest {
   pub medium: NotifyMedium,
   pub webhook_url: Option<String>,

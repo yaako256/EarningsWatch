@@ -148,6 +148,7 @@ pub async fn get_page(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreatePageRequest {
   pub r#type: PageType,
   pub title: String,
@@ -213,6 +214,7 @@ pub async fn delete_page(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdatePageOrderRequest {
   pub display_order: i32,
 }

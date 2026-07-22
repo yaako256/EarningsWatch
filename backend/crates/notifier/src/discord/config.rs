@@ -14,6 +14,7 @@ use identity::GroupId;
 use crate::discord::embed_color::EmbedColor;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// #[serde(rename_all = "camelCase")]
 pub struct DiscordConfig {
   pub group_id: GroupId,
   pub webhook_url: Option<Encrypted<WebhookUrlTag>>,
