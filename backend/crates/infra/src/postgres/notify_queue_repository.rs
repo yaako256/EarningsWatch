@@ -112,4 +112,13 @@ impl NotifyQueueRepository for PgNotifyQueueRepository {
   async fn update_status(&self, id: i64, status: NotifyStatus) -> RepositoryResult<()> {
     notify_queue::update_status(&self.pool, id, status).await
   }
+
+  async fn list_all_data_rows(
+    &self,
+    status: Option<NotifyStatus>,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<NotifyQueueEntry>, i64)> {
+    notify_queue::list_all_data_rows(&self.pool, status, page, per_page).await
+  }
 }

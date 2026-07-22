@@ -202,3 +202,93 @@ pub(crate) async fn replace_data_rows(
 
   Ok(())
 }
+
+pub(crate) async fn list_all_data_rows<'e, E>(
+  executor: E,
+  status: Option<NotifyStatus>,
+  page: u32,
+  per_page: u32,
+) -> RepositoryResult<(Vec<NotifyQueueEntry>, i64)>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  struct NotifyQueueRowWithCount {
+    id: i64,
+    fingerprint: Option<String>,
+    source: Option<EarningsSource>,
+    fetched_at: chrono::DateTime<chrono::Utc>,
+    ticker: Option<String>,
+    company_name: Option<String>,
+    published_at: Option<chrono::DateTime<chrono::Utc>>,
+    title: Option<String>,
+    url: Option<String>,
+    summary: Option<String>,
+    evaluation: Option<EarningsEvaluation>,
+    status: NotifyStatus,
+    total_count: Option<i64>,
+  }
+
+  let offset = (page.saturating_sub(1) as i64) * per_page as i64;
+  let limit = per_page as i64;
+
+  let rows = sqlx::query_as!(
+    NotifyQueueRowWithCount,
+    r#"
+    -- 通知キューのデータ行一覧を、statusフィルタとページネーション付きで取得する。
+    -- COUNT(*) OVER() で「絞り込み後・ページング前」の総件数を各行に付与し、
+    -- 1回のクエリで「今回のページの行」と「総件数」の両方を得る(N+1を避けるため)。
+    SELECT id, fingerprint, source as "source: EarningsSource", fetched_at,
+      ticker, company_name, published_at, title, url, summary,
+      evaluation as "evaluation: EarningsEvaluation",
+      status as "status: NotifyStatus",
+      COUNT(*) OVER() as total_count
+    FROM notify_queue
+    -- マーカー行(is_monitor_marker = TRUE)はAPI応答に含めないデータ行のみ対象とする
+    WHERE is_monitor_marker = FALSE
+      -- $1がNULLなら status での絞り込みを行わず全status対象、
+      -- $1に値があればその status のみに絞り込む(status: Option<NotifyStatus>)
+      AND ($1::notify_status IS NULL OR status = $1)
+    -- 新しい公開日時から順に並べる
+    ORDER BY published_at DESC
+    -- ページネーション: 1ページあたり per_page 件、page数に応じてoffsetをずらす
+    LIMIT $2 OFFSET $3
+    "#,
+    status as Option<NotifyStatus>,
+    limit,
+    offset,
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  // 絞り込み後の全件数(ページング前)。0件ヒットの場合は行が1つも返らないため0とする。
+  let total = rows.first().and_then(|r| r.total_count).unwrap_or(0);
+
+  let entries = rows
+    .into_iter()
+    .map(|row| {
+      NotifyQueueEntry::try_from(NotifyQueueRow {
+        id: row.id,
+        fingerprint: row.fingerprint,
+        source: row.source,
+        fetched_at: row.fetched_at,
+        ticker: row.ticker,
+        company_name: row.company_name,
+        published_at: row.published_at,
+        title: row.title,
+        url: row.url,
+        summary: row.summary,
+        evaluation: row.evaluation,
+        status: row.status,
+      })
+    })
+    .collect::<Result<Vec<_>, _>>()?;
+
+  Ok((entries, total))
+}
+
+/*
+-- マーカー行も含めたい場合はこの行を削除する
+-- WHERE is_monitor_marker = FALSE
+WHERE ($1::notify_status IS NULL OR status = $1)
+*/

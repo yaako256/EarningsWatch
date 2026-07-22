@@ -293,6 +293,16 @@ impl NotifyQueueRepository for PgTxRepositories {
     let mut tx = self.tx.lock().await;
     notify_queue::update_status(&mut **tx, id, status).await
   }
+
+  async fn list_all_data_rows(
+    &self,
+    status: Option<subscription::NotifyStatus>,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<subscription::NotifyQueueEntry>, i64)> {
+    let mut tx = self.tx.lock().await;
+    notify_queue::list_all_data_rows(&mut **tx, status, page, per_page).await
+  }
 }
 
 impl RepositoryScope for PgTxRepositories {
