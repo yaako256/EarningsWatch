@@ -62,23 +62,45 @@ async fn main() {
     Arc::new(infra::PgUnitOfWork::new(pool.clone()));
   let earnings_repository: Arc<dyn repository::EarningsRepository> =
     Arc::new(infra::PgEarningsRepository::new(pool.clone()));
+  let notify_history_repository: Arc<dyn repository::NotifyHistoryRepository> =
+    Arc::new(infra::PgNotifyHistoryRepository::new(pool.clone()));
+  let notify_queue_repository: Arc<dyn repository::NotifyQueueRepository> =
+    Arc::new(infra::PgNotifyQueueRepository::new(pool.clone()));
+  let log_repository: Arc<dyn repository::LogRepository> =
+    Arc::new(infra::PgLogRepository::new(pool.clone()));
+  let system_notify_config_repository: Arc<dyn repository::SystemNotifyConfigRepository> =
+    Arc::new(infra::PgSystemNotifyConfigRepository::new(pool.clone()));
+  let system_run_repository: Arc<dyn repository::SystemRunRepository> =
+    Arc::new(infra::PgSystemRunRepository::new(pool.clone()));
+  let page_repository: Arc<dyn repository::PageRepository> =
+    Arc::new(infra::PgPageRepository::new(pool.clone()));
 
   // AppStateにまとめる
   let state = api::state::AppState {
+    // リポジトリ系
     user_repository,
     refresh_token_repository,
     notify_group_repository,
     notify_discord_config_repository,
     notify_slack_config_repository,
     notify_filter_repository,
+    notify_history_repository,
+    notify_queue_repository,
+    earnings_repository,
+    log_repository,
+    system_notify_config_repository,
+    system_run_repository,
+    page_repository,
     unit_of_work,
+
+    // 設定系
     jwt_secret: settings.jwt.secret.clone(),
     access_token_ttl_minutes: settings.jwt.access_token_ttl_minutes,
     refresh_token_ttl_days: settings.jwt.refresh_token_ttl_days,
     cookie_secure: settings.cookie.secure,
     webhook_enc_key,
-    earnings_repository,
     import_settings: settings.import.clone(),
+    dashboard_settings: settings.dashboard.clone(),
   };
 
   // ルータ組み立て
