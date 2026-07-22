@@ -5,6 +5,7 @@ use identity::GroupId;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+// #[serde(rename_all = "camelCase")]
 pub struct SlackConfig {
   pub group_id: GroupId,
   pub webhook_url: Option<Encrypted<WebhookUrlTag>>,

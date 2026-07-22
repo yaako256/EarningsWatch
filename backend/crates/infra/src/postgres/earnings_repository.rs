@@ -9,7 +9,7 @@ use sqlx::PgPool;
 
 // 内部ライブラリ
 use earnings::{Earnings, EarningsEvaluation, EarningsRecord, EarningsSource};
-use repository::{EarningsRepository, RepositoryError, RepositoryResult};
+use repository::{EarningsListFilter, EarningsRepository, RepositoryError, RepositoryResult};
 
 // 自クレート
 use super::queries::earnings_query;
@@ -98,5 +98,26 @@ impl EarningsRepository for PgEarningsRepository {
     tx.commit().await.map_err(map_error)?;
 
     Ok(records)
+  }
+
+  async fn list_filtered(
+    &self,
+    filter: &EarningsListFilter,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<EarningsRecord>, i64)> {
+    earnings_query::list_filtered(&self.pool, filter, page, per_page).await
+  }
+
+  async fn count_all(&self) -> RepositoryResult<i64> {
+    earnings_query::count_all(&self.pool).await
+  }
+
+  async fn summary_daily_counts_jst(
+    &self,
+    from: Option<chrono::DateTime<chrono::Utc>>,
+    to: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>> {
+    earnings_query::summary_daily_counts_jst(&self.pool, from, to).await
   }
 }

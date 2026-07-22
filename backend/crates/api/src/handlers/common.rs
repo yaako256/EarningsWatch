@@ -9,7 +9,8 @@ use serde::{Deserialize, Serialize};
 
 // 内部ライブラリ
 use identity::{FilterId, GroupId};
-use subscription::{NotifyFilter, NotifyGroup, NotifyMedium};
+use repository::NotifyGroupRepository;
+use subscription::{NotifyFilter, NotifyGroup, NotifyHistoryEntry, NotifyMedium, NotifyStatus};
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -72,4 +73,43 @@ pub struct GroupRef {
 #[serde(rename_all = "camelCase")]
 pub enum ExportFormat {
   Xlsx,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NotifyHistoryResponse {
+  pub id: i64,
+  pub group_id: Option<GroupId>,
+  pub group_name: Option<String>,
+  pub fingerprint: String,
+  pub sent_at: DateTime<Utc>,
+  pub status: NotifyStatus,
+}
+
+/// group_idからgroup_nameを解決する(N+1、bulk操作と同じ方針で許容)。
+/// dashboard.rs・notify_history.rsの両方から使う。
+pub async fn enrich_notify_history(
+  group_repo: &dyn NotifyGroupRepository,
+  entries: Vec<NotifyHistoryEntry>,
+) -> Result<Vec<NotifyHistoryResponse>, crate::error::ApiAppError> {
+  let mut result = Vec::with_capacity(entries.len());
+  for e in entries {
+    let group_name = match e.group_id {
+      Some(gid) => group_repo
+        .find_by_id(gid)
+        .await
+        .map_err(app::AppError::from)?
+        .map(|g| g.name),
+      None => None,
+    };
+    result.push(NotifyHistoryResponse {
+      id: e.id,
+      group_id: e.group_id,
+      group_name,
+      fingerprint: e.fingerprint,
+      sent_at: e.sent_at,
+      status: e.status,
+    });
+  }
+  Ok(result)
 }

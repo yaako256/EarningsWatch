@@ -14,6 +14,8 @@ repository = { path = "../repository" }
 identity = { path = "../identity" }
 crypto = { path = "../crypto" }
 config = { path = "../config", package = "config-loader" }  # 命名回避策
+logging = { path = "../logging" }
+content = { path = "../content" }
 
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -24,3 +26,5 @@ async-trait = { workspace = true }
 reqwest = { workspace = true }
 
 rust_xlsxwriter = { workspace = true }
+
+rand = { workspace = true }

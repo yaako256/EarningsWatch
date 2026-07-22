@@ -27,4 +27,11 @@ pub trait NotifyQueueRepository: Send + Sync {
   /// notify実行時、ready状態の決算データ行を全件取得する
   async fn list_ready(&self) -> RepositoryResult<Vec<NotifyQueueEntry>>;
   async fn update_status(&self, id: i64, status: NotifyStatus) -> RepositoryResult<()>;
+  /// ステータス問わずマーカー行を除いた全件を返す(GET /api/notify-queue用)
+  async fn list_all_data_rows(
+    &self,
+    status: Option<NotifyStatus>,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<NotifyQueueEntry>, i64)>;
 }

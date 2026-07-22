@@ -12,6 +12,7 @@ use identity::{PageId, UserId};
 
 /// ページ種類の列挙型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "page_type", rename_all = "lowercase")]
 pub enum PageType {
   Blog,

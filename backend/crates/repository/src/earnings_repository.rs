@@ -5,12 +5,21 @@ backend/crates/repository/src/earnings_repository.rs
 
 // 外部クレート
 use async_trait::async_trait;
+use chrono::NaiveDate;
 
 // 内部ライブラリ
 use earnings::{Earnings, EarningsRecord};
 
 // 自クレート
 use crate::RepositoryResult;
+
+pub struct EarningsListFilter {
+  pub ticker: Option<String>,
+  pub company_name: Option<String>,
+  pub evaluation: Option<earnings::EarningsEvaluation>,
+  pub from: Option<chrono::DateTime<chrono::Utc>>,
+  pub to: Option<chrono::DateTime<chrono::Utc>>,
+}
 
 /// 決算情報テーブルのリポジトリ型
 #[async_trait]
@@ -34,4 +43,22 @@ pub trait EarningsRepository: Send + Sync {
     items: &[Earnings],
     fingerprints: &[String],
   ) -> RepositoryResult<Vec<EarningsRecord>>;
+
+  /// DB側で絞り込み条件を適用する一覧取得(GET /api/earningsとエクスポート双方で使う)
+  async fn list_filtered(
+    &self,
+    filter: &EarningsListFilter,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<earnings::EarningsRecord>, i64)>;
+
+  /// 本書4.5節、AdminDashboardResponse.total_earnings_count用
+  async fn count_all(&self) -> RepositoryResult<i64>;
+
+  /// JST基準の日別集計(DBクエリ側でAT TIME ZONE変換)
+  async fn summary_daily_counts_jst(
+    &self,
+    from: Option<chrono::DateTime<chrono::Utc>>,
+    to: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> RepositoryResult<Vec<(NaiveDate, i64)>>;
 }

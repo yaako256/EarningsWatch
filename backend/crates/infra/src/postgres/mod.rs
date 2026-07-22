@@ -3,6 +3,7 @@ backend/crates/infra/src/postgres/mod.rs
 postgresの実装
 */
 mod earnings_repository;
+mod log_repository;
 mod notify_discord_config_repository;
 mod notify_filter_repository;
 mod notify_group_repository;
@@ -20,6 +21,7 @@ mod user_settings_repository;
 pub(crate) mod queries;
 
 pub use earnings_repository::PgEarningsRepository;
+pub use log_repository::PgLogRepository;
 pub use notify_discord_config_repository::PgNotifyDiscordConfigRepository;
 pub use notify_filter_repository::PgNotifyFilterRepository;
 pub use notify_group_repository::PgNotifyGroupRepository;

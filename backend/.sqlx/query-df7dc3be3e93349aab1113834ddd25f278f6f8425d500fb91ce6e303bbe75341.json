@@ -1,0 +1,34 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT run_type::text as \"run_type!\", run_at, duration_ms\n      FROM system_runs\n      ORDER BY run_at DESC\n      LIMIT $1\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "run_type!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "run_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 2,
+        "name": "duration_ms",
+        "type_info": "Int4"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      false,
+      false
+    ]
+  },
+  "hash": "df7dc3be3e93349aab1113834ddd25f278f6f8425d500fb91ce6e303bbe75341"
+}

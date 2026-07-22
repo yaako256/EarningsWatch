@@ -34,3 +34,10 @@ default_embed_color = "0x87CEEB"
 ticker_max_len = 20
 company_name_max_len = 50
 notes_max_len = 500
+
+[dashboard]
+recent_sent_days = 5
+recent_sent_min_count = 10
+recent_failed_days = 5
+recent_failed_min_count = 5
+admin_recent_runs_count = 30

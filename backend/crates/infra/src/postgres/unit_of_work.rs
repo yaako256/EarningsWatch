@@ -28,10 +28,12 @@ use sqlx::{PgPool, Postgres, Transaction};
 use tokio::sync::Mutex;
 
 // 内部ライブラリ
+use earnings::EarningsRecord;
 use repository::{
-  BoxFuture, EarningsRepository, NotifyDiscordConfigRepository, NotifyFilterRepository,
-  NotifyGroupRepository, NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError,
-  RepositoryResult, RepositoryScope, UnitOfWork,
+  BoxFuture, EarningsListFilter, EarningsRepository, FilterCountBreakdown,
+  NotifyDiscordConfigRepository, NotifyFilterRepository, NotifyGroupRepository,
+  NotifyQueueRepository, NotifySlackConfigRepository, RepositoryError, RepositoryResult,
+  RepositoryScope, UnitOfWork,
 };
 
 // 自クレート
@@ -176,6 +178,14 @@ impl NotifyFilterRepository for PgTxRepositories {
     let mut tx = self.tx.lock().await;
     notify_filter::replace_all_for_group(&mut *tx, group_id, filters).await
   }
+
+  async fn count_breakdown_by_user(
+    &self,
+    user_id: identity::UserId,
+  ) -> RepositoryResult<FilterCountBreakdown> {
+    let mut tx = self.tx.lock().await;
+    notify_filter::count_breakdown_by_user(&mut **tx, user_id).await
+  }
 }
 
 #[async_trait]
@@ -219,6 +229,30 @@ impl EarningsRepository for PgTxRepositories {
     let mut tx = self.tx.lock().await;
     earnings_query::insert_many(&mut *tx, items, fingerprints).await
   }
+
+  async fn list_filtered(
+    &self,
+    filter: &EarningsListFilter,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<EarningsRecord>, i64)> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::list_filtered(&mut **tx, filter, page, per_page).await
+  }
+
+  async fn count_all(&self) -> RepositoryResult<i64> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::count_all(&mut **tx).await
+  }
+
+  async fn summary_daily_counts_jst(
+    &self,
+    from: Option<chrono::DateTime<chrono::Utc>>,
+    to: Option<chrono::DateTime<chrono::Utc>>,
+  ) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>> {
+    let mut tx = self.tx.lock().await;
+    earnings_query::summary_daily_counts_jst(&mut **tx, from, to).await
+  }
 }
 
 #[async_trait]
@@ -258,6 +292,16 @@ impl NotifyQueueRepository for PgTxRepositories {
   ) -> RepositoryResult<()> {
     let mut tx = self.tx.lock().await;
     notify_queue::update_status(&mut **tx, id, status).await
+  }
+
+  async fn list_all_data_rows(
+    &self,
+    status: Option<subscription::NotifyStatus>,
+    page: u32,
+    per_page: u32,
+  ) -> RepositoryResult<(Vec<subscription::NotifyQueueEntry>, i64)> {
+    let mut tx = self.tx.lock().await;
+    notify_queue::list_all_data_rows(&mut **tx, status, page, per_page).await
   }
 }
 

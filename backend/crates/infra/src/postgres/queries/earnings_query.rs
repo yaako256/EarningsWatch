@@ -2,6 +2,7 @@
 
 use chrono::NaiveDate;
 use earnings::{Earnings, EarningsEvaluation, EarningsRecord, EarningsSource};
+use repository::EarningsListFilter;
 use repository::{RepositoryError, RepositoryResult};
 use sqlx::{Executor, Postgres, Transaction};
 
@@ -222,4 +223,112 @@ pub(crate) async fn insert_many(
   }
 
   Ok(records)
+}
+
+pub(crate) async fn list_filtered<'e, E>(
+  executor: E,
+  filter: &EarningsListFilter,
+  page: u32,
+  per_page: u32,
+) -> RepositoryResult<(Vec<EarningsRecord>, i64)>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let limit = per_page as i64;
+  let offset = page.saturating_sub(1) as i64 * limit;
+
+  // 所有権の問題より、list同様、クエリを1つにまとめた
+  let rows = sqlx::query!(
+    r#"
+      SELECT
+        id,
+        ticker,
+        company_name,
+        published_at,
+        title,
+        url,
+        summary,
+        evaluation as "evaluation: EarningsEvaluation",
+        fingerprint,
+        source as "source: EarningsSource",
+        COUNT(*) OVER() as "total_count!"
+      FROM earnings
+      WHERE ($1::text IS NULL OR ticker = $1)
+        AND ($2::text IS NULL OR company_name ILIKE '%' || $2 || '%')
+        AND ($3::earnings_evaluation IS NULL OR evaluation = $3)
+        AND ($4::timestamptz IS NULL OR published_at >= $4)
+        AND ($5::timestamptz IS NULL OR published_at < $5)
+      ORDER BY published_at DESC
+      LIMIT $6 OFFSET $7
+      "#,
+    filter.ticker,
+    filter.company_name,
+    filter.evaluation as Option<EarningsEvaluation>,
+    filter.from,
+    filter.to,
+    limit,
+    offset
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  let total_count = rows.first().map(|row| row.total_count).unwrap_or(0);
+
+  let records = rows
+    .into_iter()
+    .map(|row| {
+      EarningsRecord::from(EarningsRow {
+        id: row.id,
+        ticker: row.ticker,
+        company_name: row.company_name,
+        published_at: row.published_at,
+        title: row.title,
+        url: row.url,
+        summary: row.summary,
+        evaluation: row.evaluation,
+        fingerprint: row.fingerprint,
+        source: row.source,
+      })
+    })
+    .collect();
+
+  Ok((records, total_count))
+}
+
+pub(crate) async fn count_all<'e, E>(executor: E) -> RepositoryResult<i64>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  sqlx::query_scalar!(r#"SELECT COUNT(*) as "count!" FROM earnings"#)
+    .fetch_one(executor)
+    .await
+    .map_err(map_error)
+}
+
+pub(crate) async fn summary_daily_counts_jst<'e, E>(
+  executor: E,
+  from: Option<chrono::DateTime<chrono::Utc>>,
+  to: Option<chrono::DateTime<chrono::Utc>>,
+) -> RepositoryResult<Vec<(chrono::NaiveDate, i64)>>
+where
+  E: Executor<'e, Database = Postgres>,
+{
+  let rows = sqlx::query!(
+    r#"
+      SELECT (published_at AT TIME ZONE 'Asia/Tokyo')::date as "date_jst!", COUNT(*) as "count!"
+      FROM earnings
+      WHERE ($1::timestamptz IS NULL OR published_at >= $1)
+        AND ($2::timestamptz IS NULL OR published_at < $2)
+      GROUP BY (published_at AT TIME ZONE 'Asia/Tokyo')::date
+      ORDER BY (published_at AT TIME ZONE 'Asia/Tokyo')::date
+      "#,
+    from,
+    to
+  )
+  .fetch_all(executor)
+  .await
+  .map_err(map_error)?;
+
+  Ok(rows.into_iter().map(|r| (r.date_jst, r.count)).collect())
 }

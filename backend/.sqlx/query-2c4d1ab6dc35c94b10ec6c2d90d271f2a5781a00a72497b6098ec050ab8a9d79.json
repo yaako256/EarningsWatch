@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      SELECT SUM(success_send_count) as total_success, SUM(total_send_count) as total_sent\n      FROM (\n        SELECT success_send_count, total_send_count\n        FROM system_runs\n        WHERE run_type = 'notify'\n        ORDER BY run_at DESC\n        LIMIT $1\n      ) recent\n      ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "total_success",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "total_sent",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8"
+      ]
+    },
+    "nullable": [
+      null,
+      null
+    ]
+  },
+  "hash": "2c4d1ab6dc35c94b10ec6c2d90d271f2a5781a00a72497b6098ec050ab8a9d79"
+}

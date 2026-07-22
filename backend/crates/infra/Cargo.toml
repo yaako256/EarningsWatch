@@ -12,6 +12,7 @@ subscription = { path = "../subscription" }
 identity = { path = "../identity" }
 content = { path = "../content" }
 crypto = { path = "../crypto" }
+logging = { path = "../logging" }
 
 sqlx = { workspace = true }
 async-trait = { workspace = true }
@@ -19,3 +20,5 @@ chrono = { workspace = true }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }

@@ -13,6 +13,12 @@ use subscription::NotifyFilter;
 // 自クレート
 use crate::RepositoryResult;
 
+pub struct FilterCountBreakdown {
+  pub total: u32,
+  pub unique_ticker_count: u32,
+  pub unique_company_name_count: u32,
+}
+
 /// 通知フィルターテーブルのリポジトリ型
 #[async_trait]
 pub trait NotifyFilterRepository: Send + Sync {
@@ -28,4 +34,10 @@ pub trait NotifyFilterRepository: Send + Sync {
     group_id: GroupId,
     filters: &[NotifyFilter],
   ) -> RepositoryResult<()>;
+
+  /// ユーザ単位のフィルタ数内訳(総数・ユニーク銘柄数×2種)
+  async fn count_breakdown_by_user(
+    &self,
+    user_id: identity::UserId,
+  ) -> RepositoryResult<FilterCountBreakdown>;
 }
