@@ -10,6 +10,7 @@ use tokio::sync::mpsc;
 // 外部ライブラリ
 use async_trait::async_trait;
 use chrono::Utc;
+use sqlx::PgPool;
 use tracing::Subscriber;
 use tracing_subscriber::Layer;
 use tracing_subscriber::layer::Context;
@@ -18,25 +19,46 @@ use tracing_subscriber::layer::Context;
 use crate::entry::{LogEvent, LogLevel, LogProcess};
 use crate::visit::JsonVisitor;
 
-/// SqlLayerの書き込み先を抽象化するトレイト。
-/// Phase 2時点ではPostgreSQLが存在しないため、
-/// ConsoleSink(仮実装)を差し込み、Phase 3/5でPgSinkに差し替える。
+/// SqlLayerの書き込み先を抽象化するトレイト
 #[async_trait]
 pub trait LogSink: Send + Sync + 'static {
   async fn write_batch(&self, entries: &[LogEvent]);
 }
 
 /// Phase 2時点の仮実装。標準出力へそのまま書き出す。
-pub struct ConsoleSink;
+pub struct PgSink {
+  pool: PgPool,
+}
+
+impl PgSink {
+  pub fn new(pool: PgPool) -> Self {
+    Self { pool }
+  }
+}
 
 #[async_trait]
-impl LogSink for ConsoleSink {
+impl LogSink for PgSink {
   async fn write_batch(&self, entries: &[LogEvent]) {
     for entry in entries {
-      println!(
-        "[{:?}][{:?}] {} - {:?} {}",
-        entry.process, entry.level, entry.target, entry.message, entry.fields
-      );
+      // ロギング自体の失敗がアプリケーションを落とす原因にならないよう、
+      // 個々の書き込みエラーはここで握りつぶす(標準エラー出力にのみ残す)。
+      if let Err(e) = sqlx::query!(
+        r#"
+        INSERT INTO logs (timestamp, level, process, target, message, fields)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        "#,
+        entry.timestamp,
+        entry.level as LogLevel,
+        entry.process as LogProcess,
+        entry.target,
+        entry.message,
+        entry.fields,
+      )
+      .execute(&self.pool)
+      .await
+      {
+        eprintln!("[PgSink] ログ書き込みに失敗しました: {e}");
+      }
     }
   }
 }

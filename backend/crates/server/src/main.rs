@@ -18,9 +18,16 @@ async fn main() {
   // 設定の読み込み
   let settings = config::load().expect("failed to load config");
 
+  // poolの作成
+  let pool = infra::create_pool(&settings.database.url)
+    .await
+    .expect("failed to connect to database");
+
   // server起動時はSqlLayerのみ登録
-  let (sql_layer, _writer_handle) =
-    logging::SqlLayer::new(logging::LogProcess::Server, logging::ConsoleSink);
+  let (sql_layer, _writer_handle) = logging::SqlLayer::new(
+    logging::LogProcess::Server,
+    logging::PgSink::new(pool.clone()),
+  );
 
   // ロギング設定: レイヤの追加
   tracing_subscriber::registry()
@@ -31,11 +38,6 @@ async fn main() {
     // 標準出力
     .with(tracing_subscriber::fmt::layer())
     .init();
-
-  // poolの作成
-  let pool = infra::create_pool(&settings.database.url)
-    .await
-    .expect("failed to connect to database");
 
   // webhook_enc_keyはAppState構築時に1回だけbase64デコード
   let webhook_enc_key = STANDARD
@@ -115,13 +117,13 @@ async fn main() {
     .expect("failed to bind address");
 
   // デバッグ: SqlLayerログの動作確認
-  // for i in 1..=50 - 2 - 4 {
-  //   tracing::info!(index = i, "SqlLayer test");
-  // }
-  // tracing::debug!("tracing debug test");
-  // tracing::info!("tracing info test");
-  // tracing::warn!("tracing warn test");
-  // tracing::error!("tracing error test");
+  for i in 1..=50 - 2 - 4 + 1 {
+    tracing::info!(index = i, "SqlLayer test");
+  }
+  tracing::debug!("tracing debug test");
+  tracing::info!("tracing info test");
+  tracing::warn!("tracing warn test");
+  tracing::error!("tracing error test");
 
   // 起動確認用ログ
   tracing::info!("Starting EarningWatch server");

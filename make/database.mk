@@ -45,7 +45,7 @@ db-tables:
 
 ## logsテーブル(一部)
 db-logs:
-	$(PSQL) -c "SELECT id, timestamp, level, process, target, message FROM logs;"
+	$(PSQL) -c "SELECT id, timestamp, level, process, target, message, fields FROM logs;"
 
 ## logsテーブル(全件)
 db-logs-x:
