@@ -23,7 +23,7 @@
 # ==================================================
 # Database Viewer
 # ==================================================
-.PHONY: \
+.PHONY: db-tables\
 	db-logs db-logs-x \
 	db-users db-users-x \
 	db-refresh-tokens db-refresh-tokens-x \
@@ -38,6 +38,10 @@
 	db-system-runs db-system-runs-x \
 	db-system-notify-config db-system-notify-config-x \
 	db-pages db-pages-x
+
+## テーブル一覧
+db-tables:
+	$(PSQL) -c "\dt"
 
 ## logsテーブル(一部)
 db-logs:
