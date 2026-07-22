@@ -9,4 +9,4 @@ mod visit;
 
 pub use entry::{LogEntry, LogEvent, LogLevel, LogProcess};
 pub use memory_layer::{ConsoleWarnNotifySink, MemoryLayer, WarnNotifySink};
-pub use sql_layer::{ConsoleSink, LogSink, SqlLayer};
+pub use sql_layer::{LogSink, PgSink, SqlLayer};

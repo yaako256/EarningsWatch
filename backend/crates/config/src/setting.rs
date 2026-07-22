@@ -19,6 +19,7 @@ pub struct Settings {
   pub notifier: NotifierSettings,
   pub import: ImportSettings,
   pub dashboard: DashboardSettings,
+  pub retry: RetrySettings,
 }
 
 /// サーバ設定
@@ -107,4 +108,17 @@ pub struct DashboardSettings {
   pub recent_failed_min_count: u32,
   // 管理者で実行履歴の直近n回の定義
   pub admin_recent_runs_count: u32,
+}
+
+/// スクレイピングにおけるリトライ処理の設定
+#[derive(Debug, Clone, Deserialize)]
+pub struct RetrySettings {
+  // スクレイピング処理の試行回数
+  pub monitor_health_check_retries: u32,
+  // スクレイピングの試行間隔
+  pub monitor_health_check_interval_seconds: u64,
+  // notifyの試行回数
+  pub send_retry_count: u32,
+  // notifyの試行間隔
+  pub send_retry_interval_seconds: u64,
 }

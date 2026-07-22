@@ -23,8 +23,17 @@ impl EmbedColor {
     b: 0xEB,
   };
 
-  pub fn from_hex_string(_s: &str) -> Result<Self, ParseColorError> {
-    todo!("\"0x87EB87\"形式の文字列からのパース(実装はPhase 5以降)")
+  pub fn from_hex_string(s: &str) -> Result<Self, ParseColorError> {
+    let hex = s.trim().trim_start_matches("0x").trim_start_matches("0X");
+    if hex.len() != 6 {
+      return Err(ParseColorError);
+    }
+    let value = u32::from_str_radix(hex, 16).map_err(|_| ParseColorError)?;
+    Ok(Self {
+      r: ((value >> 16) & 0xFF) as u8,
+      g: ((value >> 8) & 0xFF) as u8,
+      b: (value & 0xFF) as u8,
+    })
   }
 
   pub fn to_hex_string(&self) -> String {

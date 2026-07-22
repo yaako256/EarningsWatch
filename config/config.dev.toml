@@ -43,3 +43,9 @@ recent_sent_min_count = 10
 recent_failed_days = 5
 recent_failed_min_count = 5
 admin_recent_runs_count = 30
+
+[retry]
+monitor_health_check_retries = 3
+monitor_health_check_interval_seconds = 120
+send_retry_count = 3
+send_retry_interval_seconds = 30

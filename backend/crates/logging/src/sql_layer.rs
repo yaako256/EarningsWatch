@@ -10,6 +10,7 @@ use tokio::sync::mpsc;
 // 外部ライブラリ
 use async_trait::async_trait;
 use chrono::Utc;
+use sqlx::PgPool;
 use tracing::Subscriber;
 use tracing_subscriber::Layer;
 use tracing_subscriber::layer::Context;
@@ -18,25 +19,46 @@ use tracing_subscriber::layer::Context;
 use crate::entry::{LogEvent, LogLevel, LogProcess};
 use crate::visit::JsonVisitor;
 
-/// SqlLayerの書き込み先を抽象化するトレイト。
-/// Phase 2時点ではPostgreSQLが存在しないため、
-/// ConsoleSink(仮実装)を差し込み、Phase 3/5でPgSinkに差し替える。
+/// SqlLayerの書き込み先を抽象化するトレイト
 #[async_trait]
 pub trait LogSink: Send + Sync + 'static {
   async fn write_batch(&self, entries: &[LogEvent]);
 }
 
 /// Phase 2時点の仮実装。標準出力へそのまま書き出す。
-pub struct ConsoleSink;
+pub struct PgSink {
+  pool: PgPool,
+}
+
+impl PgSink {
+  pub fn new(pool: PgPool) -> Self {
+    Self { pool }
+  }
+}
 
 #[async_trait]
-impl LogSink for ConsoleSink {
+impl LogSink for PgSink {
   async fn write_batch(&self, entries: &[LogEvent]) {
     for entry in entries {
-      println!(
-        "[{:?}][{:?}] {} - {:?} {}",
-        entry.process, entry.level, entry.target, entry.message, entry.fields
-      );
+      // ロギング自体の失敗がアプリケーションを落とす原因にならないよう、
+      // 個々の書き込みエラーはここで握りつぶす(標準エラー出力にのみ残す)。
+      if let Err(e) = sqlx::query!(
+        r#"
+        INSERT INTO logs (timestamp, level, process, target, message, fields)
+          VALUES ($1, $2, $3, $4, $5, $6)
+        "#,
+        entry.timestamp,
+        entry.level as LogLevel,
+        entry.process as LogProcess,
+        entry.target,
+        entry.message,
+        entry.fields,
+      )
+      .execute(&self.pool)
+      .await
+      {
+        eprintln!("[PgSink] ログ書き込みに失敗しました: {e}");
+      }
     }
   }
 }
@@ -46,9 +68,11 @@ const BATCH_FLUSH_THRESHOLD: usize = 50;
 
 enum WriterMessage {
   Event(LogEvent),
-  FlushNow, // server: フロントからログ表示リクエストが来たら / cli: 単発実行終了時
+  // server: フロントからログ表示リクエストが来たら / cli: 単発実行終了時
+  FlushNow(tokio::sync::oneshot::Sender<()>),
 }
 
+#[derive(Clone)]
 pub struct SqlLayer {
   sender: mpsc::UnboundedSender<WriterMessage>,
   process: LogProcess,
@@ -71,8 +95,10 @@ impl SqlLayer {
 
   /// server: フロントエンドからログ表示のリクエストが来た際に呼ぶ想定(design 1.2章)
   /// cli: monitor/notify単発実行の終了時に呼ぶ想定(design 1.2章、最終flush)
-  pub fn flush_now(&self) {
-    let _ = self.sender.send(WriterMessage::FlushNow);
+  pub async fn flush_now(&self) {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let _ = self.sender.send(WriterMessage::FlushNow(tx));
+    let _ = rx.await;
   }
 }
 
@@ -88,11 +114,12 @@ async fn batch_writer_task(mut rx: mpsc::UnboundedReceiver<WriterMessage>, sink:
           buffer.clear();
         }
       }
-      WriterMessage::FlushNow => {
+      WriterMessage::FlushNow(done) => {
         if !buffer.is_empty() {
           sink.write_batch(&buffer).await;
           buffer.clear();
         }
+        let _ = done.send(());
       }
     }
   }

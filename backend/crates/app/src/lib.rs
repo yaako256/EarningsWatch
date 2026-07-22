@@ -13,6 +13,7 @@ mod export;
 mod filter;
 mod group;
 mod import;
+mod monitor;
 mod notify;
 mod page;
 
@@ -25,5 +26,6 @@ pub use export::*;
 pub use filter::*;
 pub use group::*;
 pub use import::*;
+pub use monitor::*;
 pub use notify::*;
 pub use page::*;

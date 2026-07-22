@@ -1,3 +1,16 @@
 // crates/scraper/src/lib.rs
 //! scraperクレート。スクレイピング対象Trait + サイトごとの実装(Python連携、stdout経由JSON)。
 //! debug.rs実装はPhase 11、kabuyoho実装はPhase 13で行う(design/03-features/scraping.md参照)。
+
+// スクレイパー
+mod debug;
+// その他定義
+mod error;
+mod traits;
+
+// 各スクレイパーを再エクスポートで公開
+pub use debug::DebugScraper;
+
+// その他再エクスポート
+pub use error::ScraperError;
+pub use traits::ScraperService;

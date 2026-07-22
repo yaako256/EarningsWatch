@@ -19,9 +19,17 @@
 # 	$(MAKE) cli \
 # 		ARGS="migrate --migrations-path $(MIGRATIONS_PATH)"
 
+# ==================================================
+# Database Action
+# ==================================================
+.PHONY: db-tables
+
+## テーブル一覧確認
+db-tables:
+	$(PSQL) -c "\dt"
 
 # ==================================================
-# Database Viewer
+# Database table Viewer
 # ==================================================
 .PHONY: \
 	db-logs db-logs-x \
@@ -41,7 +49,7 @@
 
 ## logsテーブル(一部)
 db-logs:
-	$(PSQL) -c "SELECT id, timestamp, level, process, target, message FROM logs;"
+	$(PSQL) -c "SELECT id, timestamp, level, process, target, message, fields FROM logs;"
 
 ## logsテーブル(全件)
 db-logs-x:

@@ -4,6 +4,8 @@ CLIのエントリポイント
 */
 
 // 外部クレート
+use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD;
 use clap::{Parser, Subcommand};
 
 // 自クレート
@@ -23,11 +25,11 @@ enum Command {
     #[arg(long)]
     username: String,
   },
-  /// マイグレーションを適用する(design/00-overview.md 7.1章)
+  /// マイグレーションを適用する
   Migration,
-  /// 決算情報を収集する(design/00-overview.md 6.1章、Phase 11で実装)
+  /// 決算情報を収集する
   Monitor,
-  /// 通知を送信する(design/00-overview.md 6.1章、Phase 11で実装)
+  /// 通知を送信する
   Notify,
 }
 
@@ -36,6 +38,7 @@ async fn main() {
   let cli = Cli::parse();
 
   let settings = config::load().expect("failed to load config");
+
   let pool = infra::create_pool(&settings.database.url)
     .await
     .expect("failed to connect to database");
@@ -44,12 +47,13 @@ async fn main() {
     Command::Migration => commands::migration::run(&pool).await,
     Command::CreateAdmin { username } => commands::create_admin::run(&pool, username).await,
     Command::Monitor => {
-      eprintln!("monitor コマンドは未実装です(Phase 11で実装予定)");
-      std::process::exit(1);
+      commands::monitor::run(&pool, settings.scraping.recent_fingerprint_limit).await;
     }
     Command::Notify => {
-      eprintln!("notify コマンドは未実装です(Phase 11で実装予定)");
-      std::process::exit(1);
+      let webhook_enc_key = STANDARD
+        .decode(&settings.security.webhook_enc_key)
+        .expect("webhook_enc_keyのbase64デコードに失敗しました");
+      commands::notify::run(&pool, &webhook_enc_key, &settings.retry).await;
     }
   }
 }

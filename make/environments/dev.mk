@@ -84,3 +84,34 @@ migrate-reset:
 sqlx-prepare:
 	$(COMPOSE) exec $(BACKEND_SERVICE_NAME) \
 		cargo sqlx prepare --workspace
+
+
+.PHONY: db-tables-reset-aspeovirhnalkvsdfh
+
+## テーブルリセット (開発環境専用)
+# (間違えて実行しないように意味不明な文字列)
+db-tables-reset-aspeovirhnalkvsdfh:
+	@echo "[WARNING] 全テーブルのデータを削除します（開発環境専用）。続行しますか？ [y/N]: "; \
+	read ans; \
+	if [ "$$ans" != "y" ]; then \
+		echo "キャンセルしました"; \
+		exit 1; \
+	fi
+	$(PSQL) -c "\
+	TRUNCATE TABLE \
+		refresh_tokens, \
+		user_settings, \
+		notify_discord_configs, \
+		notify_slack_configs, \
+		notify_filters, \
+		notify_queue, \
+		notify_history, \
+		notify_groups, \
+		earnings, \
+		system_runs, \
+		system_notify_config, \
+		pages, \
+		logs, \
+		users \
+	RESTART IDENTITY CASCADE;"
+	@echo "リセット完了しました"

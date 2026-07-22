@@ -31,6 +31,10 @@ pub enum AppError {
   ImportEmpty,
   #[error(transparent)]
   Repository(#[from] repository::RepositoryError),
+  #[error("スクレイピングに失敗しました: {0}")]
+  ScraperError(String), // 追加
+  #[error("monitorが正常に完了していません")]
+  MonitorNotHealthy,
 }
 /// appクレートのリザルト
 pub(crate) type AppResult<T> = Result<T, AppError>;

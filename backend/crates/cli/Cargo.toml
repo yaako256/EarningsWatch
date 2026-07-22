@@ -19,9 +19,13 @@ notifier = { path = "../notifier" }
 clap = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 # migration用
 sqlx = { workspace = true }
 
 # 対話的パスワード入力
 rpassword = { workspace = true }
+
+# webhookurlデコード用
+base64 = { workspace = true }

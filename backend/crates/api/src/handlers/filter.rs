@@ -70,6 +70,7 @@ pub async fn list_filters(
 
 // ─── POST /api/groups/{id}/filters ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct CreateFilterRequest {
   pub ticker: String,
   pub company_name: String,
