@@ -13,6 +13,7 @@ repository = { path = "../repository" }
 subscription = { path = "../subscription" }
 earnings = { path = "../earnings" }
 config = { path = "../config", package = "config-loader" }  # 命名回避策
+logging = { path = "../logging" }
 
 axum = { workspace = true }
 axum-extra = { workspace = true }

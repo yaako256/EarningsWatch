@@ -16,7 +16,7 @@ mod import;
 mod notify;
 mod page;
 
-pub use admin::create_admin_user;
+pub use admin::*;
 pub use auth::{LoginOutput, login, logout, refresh};
 pub use dashboard::*;
 pub use earnings::*;

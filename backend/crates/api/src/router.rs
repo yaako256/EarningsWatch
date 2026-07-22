@@ -10,7 +10,7 @@ use axum::{
 };
 
 // 自クレート
-use crate::handlers::{auth, earnings, filter, group, health};
+use crate::handlers::*;
 use crate::state::AppState;
 
 pub fn build_router(state: AppState) -> Router {
@@ -72,5 +72,41 @@ pub fn build_router(state: AppState) -> Router {
       get(filter::export_group_filters),
     )
     .route("/api/earnings/export", get(earnings::export_earnings))
+    // ダッシュボード
+    .route("/api/dashboard", get(dashboard::get_dashboard))
+    // 決算情報系
+    .route("/api/earnings", get(earnings::list_earnings))
+    .route("/api/earnings/summary", get(earnings::earnings_summary))
+    // 送信キュー/履歴
+    .route("/api/notify-queue", get(notify_queue::list_notify_queue))
+    .route(
+      "/api/notify-history",
+      get(notify_history::list_notify_history),
+    )
+    // 管理者機能
+    .route("/api/admin/logs", get(admin::list_logs))
+    .route(
+      "/api/admin/users",
+      get(admin::list_users).post(admin::create_user),
+    )
+    .route("/api/admin/users/:id/disable", post(admin::disable_user))
+    .route("/api/admin/users/:id/summary", get(admin::user_summary))
+    .route(
+      "/api/admin/notify-config",
+      get(admin::get_notify_config).put(admin::update_notify_config),
+    )
+    .route("/api/admin/dashboard", get(admin::admin_dashboard))
+    // ページ機能系
+    .route("/api/pages", get(page::list_pages).post(page::create_page))
+    .route(
+      "/api/pages/:id",
+      get(page::get_page)
+        .put(page::update_page)
+        .delete(page::delete_page),
+    )
+    .route(
+      "/api/pages/:id/order",
+      axum::routing::patch(page::update_page_order),
+    )
     .with_state(state)
 }
