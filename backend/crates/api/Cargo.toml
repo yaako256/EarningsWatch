@@ -25,3 +25,4 @@ chrono = { workspace = true }
 time = { workspace = true }
 uuid = { workspace = true }
 async-trait = { workspace = true }
+tracing = { workspace = true }

@@ -63,10 +63,14 @@ impl From<app::AppError> for ApiAppError {
         ApiErrorCode::ImportEmpty,
         "インポート対象の行が1件もありません".to_string(),
       ),
-      _ => ApiAppError(
-        ApiErrorCode::InternalError,
-        "フロントエンドに行くはずのないエラーです".to_string(),
-      ),
+      // CLI専用エラー：本来ここには到達しないはず。バグとして検知する。
+      app::AppError::ScraperError(_) | app::AppError::MonitorNotHealthy => {
+        tracing::error!(error = ?e, "CLI専用エラーがAPI層に到達しました");
+        ApiAppError(
+          ApiErrorCode::InternalError,
+          "内部エラーが発生しました".to_string(),
+        )
+      }
     }
   }
 }
