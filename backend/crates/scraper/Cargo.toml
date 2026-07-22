@@ -13,3 +13,4 @@ async-trait = { workspace = true }
 thiserror = { workspace = true }
 # tokio::process(Pythonプロセス起動)
 tokio = { workspace = true }
+chrono = { workspace = true }

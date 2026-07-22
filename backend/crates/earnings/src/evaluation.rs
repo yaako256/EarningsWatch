@@ -16,6 +16,19 @@ pub enum EarningsEvaluation {
   Unrated,
 }
 
+impl EarningsEvaluation {
+  /// スクレイピング元サイトの生の評価表記を正規化する。
+  /// 未知の表記・評価情報を持たないサイトへの対応時はUnratedとして扱う。
+  pub fn parse_from_site_text(raw: &str) -> Self {
+    match raw.trim().to_uppercase().as_str() {
+      "POSITIVE" => Self::Positive,
+      "NEUTRAL" => Self::Neutral,
+      "NEGATIVE" => Self::Negative,
+      _ => Self::Unrated,
+    }
+  }
+}
+
 /// ソースサイト列挙型
 // 新しいスクレイピング対象サイトを追加する場合はここにvariantを追加する
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
