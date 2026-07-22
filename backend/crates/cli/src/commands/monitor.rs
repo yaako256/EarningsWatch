@@ -22,8 +22,13 @@ pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
   let memory_layer_for_flush = memory_layer.clone();
 
   tracing_subscriber::registry()
+    // ログレベルの設定(デフォルトでdebug)
+    .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "debug".into()))
+    // SQLレイヤ
     .with(sql_layer)
+    // メモリレイヤ
     .with(memory_layer)
+    // 標準出力
     .with(tracing_subscriber::fmt::layer())
     .init();
 
@@ -32,28 +37,27 @@ pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
   let queue_repo = infra::PgNotifyQueueRepository::new(pool.clone());
   let system_run_repo = infra::PgSystemRunRepository::new(pool.clone());
 
-  match app::run_monitor(
+  let result = app::run_monitor(
     &scraper,
     &earnings_repo,
     &queue_repo,
     &system_run_repo,
     recent_fingerprint_limit,
   )
-  .await
-  {
-    Ok(result) => {
-      println!(
-        "monitor completed: new_earnings_count={}, duration_ms={}",
-        result.new_earnings_count, result.duration_ms
-      );
-    }
-    Err(e) => {
-      eprintln!("monitor failed: {e}");
-      std::process::exit(1);
-    }
+  .await;
+
+  if let Err(e) = &result {
+    // 暫定: どのステップで失敗したかはここでは分からない
+    // 後で書く場所にerror!を出させる方針に変更する
+    tracing::error!(error = %e, "monitor failed");
   }
 
   // プロセス終了前に両レイヤーをflushする
-  sql_layer_for_flush.flush_now();
+  sql_layer_for_flush.flush_now().await;
   memory_layer_for_flush.flush().await;
+
+  // flush後にexit codeだけ制御する
+  if result.is_err() {
+    std::process::exit(1);
+  }
 }

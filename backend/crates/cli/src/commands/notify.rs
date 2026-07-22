@@ -17,8 +17,13 @@ pub async fn run(pool: &PgPool, webhook_enc_key: &[u8], retry_settings: &config:
   let memory_layer_for_flush = memory_layer.clone();
 
   tracing_subscriber::registry()
+    // ログレベルの設定(デフォルトでdebug)
+    .with(tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "debug".into()))
+    // SQLレイヤ
     .with(sql_layer)
+    // メモリレイヤ
     .with(memory_layer)
+    // 標準出力
     .with(tracing_subscriber::fmt::layer())
     .init();
 
@@ -29,7 +34,7 @@ pub async fn run(pool: &PgPool, webhook_enc_key: &[u8], retry_settings: &config:
   let history_repo = infra::PgNotifyHistoryRepository::new(pool.clone());
   let system_run_repo = infra::PgSystemRunRepository::new(pool.clone());
 
-  match app::run_notify(
+  let result = app::run_notify(
     &queue_repo,
     &group_repo,
     &filter_repo,
@@ -39,21 +44,20 @@ pub async fn run(pool: &PgPool, webhook_enc_key: &[u8], retry_settings: &config:
     webhook_enc_key,
     retry_settings,
   )
-  .await
-  {
-    Ok(result) => {
-      println!(
-        "notify completed: total_send_count={}, success_send_count={}, duration_ms={}",
-        result.total_send_count, result.success_send_count, result.duration_ms
-      );
-    }
-    Err(e) => {
-      eprintln!("notify failed: {e}");
-      std::process::exit(1);
-    }
+  .await;
+
+  if let Err(e) = &result {
+    // 暫定: どのステップで失敗したかはここでは分からない
+    // 後で書く場所にerror!を出させる方針に変更する
+    tracing::error!(error = %e, "notify failed");
   }
 
   // プロセス終了前に両レイヤーをflushする
-  sql_layer_for_flush.flush_now();
+  sql_layer_for_flush.flush_now().await;
   memory_layer_for_flush.flush().await;
+
+  // flush後にexit codeだけ制御する
+  if result.is_err() {
+    std::process::exit(1);
+  }
 }

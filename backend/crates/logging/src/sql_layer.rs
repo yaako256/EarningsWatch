@@ -68,7 +68,8 @@ const BATCH_FLUSH_THRESHOLD: usize = 50;
 
 enum WriterMessage {
   Event(LogEvent),
-  FlushNow, // server: フロントからログ表示リクエストが来たら / cli: 単発実行終了時
+  // server: フロントからログ表示リクエストが来たら / cli: 単発実行終了時
+  FlushNow(tokio::sync::oneshot::Sender<()>),
 }
 
 #[derive(Clone)]
@@ -94,8 +95,10 @@ impl SqlLayer {
 
   /// server: フロントエンドからログ表示のリクエストが来た際に呼ぶ想定(design 1.2章)
   /// cli: monitor/notify単発実行の終了時に呼ぶ想定(design 1.2章、最終flush)
-  pub fn flush_now(&self) {
-    let _ = self.sender.send(WriterMessage::FlushNow);
+  pub async fn flush_now(&self) {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let _ = self.sender.send(WriterMessage::FlushNow(tx));
+    let _ = rx.await;
   }
 }
 
@@ -111,11 +114,12 @@ async fn batch_writer_task(mut rx: mpsc::UnboundedReceiver<WriterMessage>, sink:
           buffer.clear();
         }
       }
-      WriterMessage::FlushNow => {
+      WriterMessage::FlushNow(done) => {
         if !buffer.is_empty() {
           sink.write_batch(&buffer).await;
           buffer.clear();
         }
+        let _ = done.send(());
       }
     }
   }

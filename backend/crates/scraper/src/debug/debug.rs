@@ -27,7 +27,8 @@ impl ScraperService for DebugScraper {
     known_fingerprints: HashSet<String>,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)> {
     let mut new_items = Vec::new();
-    let mut page = 1u32;
+    // let mut page = 1u32;
+    let page = 1u32;
 
     // 一覧ページの取得処理
     // 新規ページがなくなるまでループ取得する
@@ -66,9 +67,11 @@ impl ScraperService for DebugScraper {
         break;
       }
 
-      page += 1;
+      // page += 1;
 
       // 本来はここでクールタイムを設ける(サーバ負荷対策)
+      // デバッグは絶対に1ページで終わることにする。
+      break;
     }
 
     // ---- 新規分のみ詳細ページへ遷移する ----
@@ -94,7 +97,7 @@ impl ScraperService for DebugScraper {
 async fn fetch_list(page: u32) -> ScraperResult<Vec<DebugListItem>> {
   // 一覧ページを取得
   let output = tokio::process::Command::new("python3")
-    .arg("scripts/debug/debug.py")
+    .arg("../scripts/debug/debug.py")
     .arg("list")
     .arg("--page")
     .arg(page.to_string())
@@ -120,7 +123,7 @@ async fn fetch_list(page: u32) -> ScraperResult<Vec<DebugListItem>> {
 async fn fetch_detail(url: &str) -> ScraperResult<Earnings> {
   // 個別ページのスクレイピング処理
   let output = tokio::process::Command::new("python3")
-    .arg("scripts/debug/debug.py")
+    .arg("../scripts/debug/debug.py")
     .arg("detail")
     .arg("--url")
     .arg(url)

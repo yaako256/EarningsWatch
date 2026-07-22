@@ -48,7 +48,6 @@ async fn main() {
     Command::CreateAdmin { username } => commands::create_admin::run(&pool, username).await,
     Command::Monitor => {
       commands::monitor::run(&pool, settings.scraping.recent_fingerprint_limit).await;
-      std::process::exit(1);
     }
     Command::Notify => {
       let webhook_enc_key = STANDARD
