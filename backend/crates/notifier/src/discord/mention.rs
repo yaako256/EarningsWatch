@@ -27,9 +27,38 @@ pub enum MentionTarget {
 }
 
 impl MentionTarget {
-  // 不正な文字列は警告ログを残しつつスキップする方針(呼び出し側で対応、design/02-types/notifier.md 1章)
-  pub fn parse(_raw: &str) -> Result<Self, ParseMentionTargetError> {
-    todo!("プレフィックス(user:/role:/time:)またはeveryone/hereでの機械的な判別(実装はPhase 5以降)")
+  // 不正な文字列は警告ログを残しつつスキップする方針(呼び出し側で対応)
+  pub fn parse(raw: &str) -> Result<Self, ParseMentionTargetError> {
+    if let Some(id) = raw.strip_prefix("user:") {
+      return Ok(Self::User(id.to_string()));
+    }
+    if let Some(id) = raw.strip_prefix("role:") {
+      return Ok(Self::Role(id.to_string()));
+    }
+    if let Some(style) = raw.strip_prefix("time:") {
+      let time_style = match style {
+        "t" => TimeStyle::T,
+        "T" => TimeStyle::LongT,
+        "d" => TimeStyle::D,
+        "D" => TimeStyle::LongD,
+        "f" => TimeStyle::F,
+        "F" => TimeStyle::LongF,
+        "R" => TimeStyle::R,
+        _ => {
+          return Err(ParseMentionTargetError {
+            raw: raw.to_string(),
+          });
+        }
+      };
+      return Ok(Self::Time(time_style));
+    }
+    match raw {
+      "everyone" => Ok(Self::Everyone),
+      "here" => Ok(Self::Here),
+      _ => Err(ParseMentionTargetError {
+        raw: raw.to_string(),
+      }),
+    }
   }
 }
 

@@ -7,9 +7,6 @@ backend/crates/earnings/src/fingerprint.rs
 // Hash
 use sha2::{Digest, Sha256};
 
-// 自クレート
-use crate::EarningsEvaluation;
-
 /// fingerprintを生成する。
 /// 一覧ページ取得時点の判別用フィールド群(タイトル・書き出し・決算評価等)から
 /// ハッシュ化する。
@@ -34,6 +31,7 @@ pub fn compute_fingerprint(fingerprint_items: &[&str]) -> String {
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::EarningsEvaluation;
 
   #[test]
   fn same_input_produces_same_fingerprint() {
