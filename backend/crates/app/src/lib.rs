@@ -13,6 +13,7 @@ mod export;
 mod filter;
 mod group;
 mod import;
+mod monitor;
 mod notify;
 mod page;
 

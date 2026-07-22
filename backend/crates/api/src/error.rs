@@ -63,6 +63,10 @@ impl From<app::AppError> for ApiAppError {
         ApiErrorCode::ImportEmpty,
         "インポート対象の行が1件もありません".to_string(),
       ),
+      _ => ApiAppError(
+        ApiErrorCode::InternalError,
+        "フロントエンドに行くはずのないエラーです".to_string(),
+      ),
     }
   }
 }
