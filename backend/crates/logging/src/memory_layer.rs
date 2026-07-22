@@ -44,6 +44,7 @@ impl WarnNotifySink for ConsoleWarnNotifySink {
   }
 }
 
+#[derive(Clone)]
 pub struct MemoryLayer {
   process: LogProcess,
   buffer: Arc<Mutex<Vec<LogEvent>>>,

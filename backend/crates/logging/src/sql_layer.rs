@@ -71,6 +71,7 @@ enum WriterMessage {
   FlushNow, // server: フロントからログ表示リクエストが来たら / cli: 単発実行終了時
 }
 
+#[derive(Clone)]
 pub struct SqlLayer {
   sender: mpsc::UnboundedSender<WriterMessage>,
   process: LogProcess,

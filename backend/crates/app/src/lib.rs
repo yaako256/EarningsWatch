@@ -26,5 +26,6 @@ pub use export::*;
 pub use filter::*;
 pub use group::*;
 pub use import::*;
+pub use monitor::*;
 pub use notify::*;
 pub use page::*;
