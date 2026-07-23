@@ -1,0 +1,104 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    SELECT\n      id,\n      ticker,\n      company_name,\n      published_at,\n      title,\n      url,\n      summary,\n      evaluation as \"evaluation: EarningsEvaluation\",\n      fingerprint,\n      source as \"source: EarningsSource\",\n      COUNT(*) OVER() as \"total_count!\"\n    FROM earnings\n    ORDER BY published_at DESC\n    LIMIT $1 OFFSET $2\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "ticker",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "company_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "published_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "summary",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "evaluation: EarningsEvaluation",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_evaluation",
+            "kind": {
+              "Enum": [
+                "POSITIVE",
+                "NEUTRAL",
+                "NEGATIVE",
+                "UNRATED"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "fingerprint",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "source: EarningsSource",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_source",
+            "kind": {
+              "Enum": [
+                "kabuyoho"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 10,
+        "name": "total_count!",
+        "type_info": "Int8"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Int8",
+        "Int8"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      null
+    ]
+  },
+  "hash": "6a7d8baf5bbad40edfb97e51877fbcb949a45f81516884d80a47d3e4bdf0f589"
+}

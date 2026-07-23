@@ -1,0 +1,19 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      UPDATE pages\n      SET title = $2, content_markdown = $3, display_order = $4, is_published = $5, updated_at = $6\n      WHERE id = $1\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Int4",
+        "Bool",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "96f865a2dfd2065eef1f00557fff56f82f19ad728fbc5442811ab472feced5f1"
+}

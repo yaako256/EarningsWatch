@@ -1,0 +1,17 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    INSERT INTO notify_slack_configs (group_id, webhook_url, mention_enabled, mention_targets)\n    VALUES ($1, $2, $3, $4)\n    ON CONFLICT (group_id) DO UPDATE\n    SET webhook_url = EXCLUDED.webhook_url,\n      mention_enabled = EXCLUDED.mention_enabled,\n      mention_targets = EXCLUDED.mention_targets\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Bool",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cdc9b2585be83f40582097ce7551c7279366cc94b8b5b544375722f7d17f5d58"
+}

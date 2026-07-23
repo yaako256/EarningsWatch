@@ -1,0 +1,97 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    SELECT id, ticker, company_name, published_at, title, url, summary,\n      evaluation as \"evaluation: EarningsEvaluation\",\n      fingerprint,\n      source as \"source: EarningsSource\"\n    FROM earnings WHERE fingerprint = $1\n    ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Int8"
+      },
+      {
+        "ordinal": 1,
+        "name": "ticker",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "company_name",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "published_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 5,
+        "name": "url",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 6,
+        "name": "summary",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 7,
+        "name": "evaluation: EarningsEvaluation",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_evaluation",
+            "kind": {
+              "Enum": [
+                "POSITIVE",
+                "NEUTRAL",
+                "NEGATIVE",
+                "UNRATED"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 8,
+        "name": "fingerprint",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 9,
+        "name": "source: EarningsSource",
+        "type_info": {
+          "Custom": {
+            "name": "earnings_source",
+            "kind": {
+              "Enum": [
+                "kabuyoho"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "486681a463d51ffbc254ff1aaefc8594183897ca71b536c6321a2e250fde546e"
+}

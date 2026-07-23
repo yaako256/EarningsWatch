@@ -1,0 +1,18 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n    INSERT INTO notify_discord_configs (group_id, webhook_url, embed_color, mention_enabled, mention_targets)\n    VALUES ($1, $2, $3, $4, $5)\n    ON CONFLICT (group_id) DO UPDATE\n    SET webhook_url = EXCLUDED.webhook_url,\n      embed_color = EXCLUDED.embed_color,\n      mention_enabled = EXCLUDED.mention_enabled,\n      mention_targets = EXCLUDED.mention_targets\n    ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Text",
+        "Text",
+        "Bool",
+        "TextArray"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "59afb1a406a12deb7c7678b217ff12323e11813bf0bfe4f06b6b5d63ddd1231c"
+}

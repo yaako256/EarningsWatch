@@ -1,0 +1,28 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO system_notify_config (id, medium, webhook_url, mention_enabled, mention_targets, updated_at)\n      VALUES (TRUE, $1, $2, $3, $4, $5)\n      ON CONFLICT (id) DO UPDATE\n      SET medium = EXCLUDED.medium,\n          webhook_url = EXCLUDED.webhook_url,\n          mention_enabled = EXCLUDED.mention_enabled,\n          mention_targets = EXCLUDED.mention_targets,\n          updated_at = EXCLUDED.updated_at\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        {
+          "Custom": {
+            "name": "notify_medium",
+            "kind": {
+              "Enum": [
+                "discord",
+                "slack"
+              ]
+            }
+          }
+        },
+        "Text",
+        "Bool",
+        "TextArray",
+        "Timestamptz"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "79454e6f92f99b50bbef0e7ea2dc43385ad46b72252a21847effffbe4261bcf5"
+}

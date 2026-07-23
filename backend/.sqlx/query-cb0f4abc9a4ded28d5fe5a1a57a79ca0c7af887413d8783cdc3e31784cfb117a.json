@@ -1,0 +1,16 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n      INSERT INTO system_runs (run_type, run_at, duration_ms, new_earnings_count)\n      VALUES ('monitor', $1, $2, $3)\n      ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Timestamptz",
+        "Int4",
+        "Int4"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "cb0f4abc9a4ded28d5fe5a1a57a79ca0c7af887413d8783cdc3e31784cfb117a"
+}
