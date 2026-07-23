@@ -6,6 +6,7 @@
 
 # 自分用フォルダ/ファイルを除外
 _メモ.md
+.memo/_*
 .memo/バックエンド開発指南
 generate_tree_ver2.py
 filters_export.xlsx
