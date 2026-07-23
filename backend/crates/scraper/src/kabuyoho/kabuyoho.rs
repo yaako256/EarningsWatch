@@ -176,7 +176,7 @@ async fn fetch_detail(url: &str, scraper_dir_path: &Path) -> ScraperResult<Earni
     company_name: parsed.company_name,
     published_at: parsed.published_at,
     title: parsed.title,
-    url: url.to_string(),
+    url: parsed.url,
     summary: parsed.summary,
     evaluation: EarningsEvaluation::Unrated, // 呼び出し元(fetch_earning_info)で一覧段階の値に上書きされる
   })
