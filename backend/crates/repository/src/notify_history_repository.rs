@@ -20,11 +20,13 @@ pub trait NotifyHistoryRepository: Send + Sync {
   async fn list_by_group_id(
     &self,
     group_id: GroupId,
+    status: Option<NotifyStatus>,
     page: u32,
     per_page: u32,
   ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)>;
   async fn list_all(
     &self,
+    status: Option<NotifyStatus>,
     page: u32,
     per_page: u32,
   ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)>;

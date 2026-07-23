@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT id, group_id, fingerprint, sent_at, status as \"status: NotifyStatus\"\n      FROM notify_history\n      ORDER BY sent_at DESC LIMIT $1 OFFSET $2\n      ",
+  "query": "\n      SELECT id, group_id, fingerprint, sent_at, status as \"status: NotifyStatus\"\n      FROM notify_history\n      WHERE ($1::notify_status IS NULL OR status = $1)\n      ORDER BY sent_at DESC LIMIT $2 OFFSET $3\n      ",
   "describe": {
     "columns": [
       {
@@ -42,6 +42,18 @@
     ],
     "parameters": {
       "Left": [
+        {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        },
         "Int8",
         "Int8"
       ]
@@ -54,5 +66,5 @@
       false
     ]
   },
-  "hash": "790c4b3ecc8467e45ba87bca06c60dc3940f600c0b6e6a93bbd699b625a5f2b5"
+  "hash": "3520e004c42b38d09cad58fffabb88c45309957417a12e9bc670e79e39a7167c"
 }
