@@ -14,6 +14,9 @@ import argparse
 import json
 import sys
 
+# 別のもの判定させるやつ
+FINGER_NUM = 4
+
 
 def cmd_list(page: int) -> dict:
     """
@@ -28,10 +31,10 @@ def cmd_list(page: int) -> dict:
     return {
         "items": [
             {
-                "fingerprint_item_1": "【ダミー】株式会社サンプル 決算速報",
+                "fingerprint_item_1": f"【ダミー】株式会社サンプル 決算速報{FINGER_NUM}",
                 "fingerprint_item_2": "本日、株式会社サンプルは決算を発表しました。",
                 "fingerprint_item_3": "UNRATED",
-                "url": "https://example.com/debug/detail/1",
+                "url": f"https://example.com/debug/detail/1",
             }
         ]
     }
