@@ -27,6 +27,8 @@ enum Command {
   },
   /// マイグレーションを適用する
   Migration,
+  /// 初回実行時、直近分を通知せず記録のみ行う
+  Init,
   /// 決算情報を収集する
   Monitor,
   /// 通知を送信する
@@ -46,8 +48,22 @@ async fn main() {
   match cli.command {
     Command::Migration => commands::migration::run(&pool).await,
     Command::CreateAdmin { username } => commands::create_admin::run(&pool, username).await,
+    Command::Init => {
+      commands::init::run(
+        &pool,
+        settings.scraping.list_page_interval_seconds,
+        settings.scraping.detail_interval_seconds,
+      )
+      .await;
+    }
     Command::Monitor => {
-      commands::monitor::run(&pool, settings.scraping.recent_fingerprint_limit).await;
+      commands::monitor::run(
+        &pool,
+        settings.scraping.recent_fingerprint_limit,
+        settings.scraping.list_page_interval_seconds,
+        settings.scraping.detail_interval_seconds,
+      )
+      .await;
     }
     Command::Notify => {
       let webhook_enc_key = STANDARD

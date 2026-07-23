@@ -26,6 +26,8 @@ server_flush_window_seconds = 60
 
 [scraping]
 recent_fingerprint_limit = 100
+list_page_interval_seconds = 10
+detail_interval_seconds = 15
 
 [notifier]
 default_embed_color = "0x87CEEB"

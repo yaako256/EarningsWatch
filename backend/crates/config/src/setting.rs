@@ -75,6 +75,10 @@ pub struct LoggingSettings {
 pub struct ScrapingSettings {
   /// 直近fingerprint取得件数 (件数ベース1本化)(既定:100件)
   pub recent_fingerprint_limit: u32,
+  // 一覧ページスクレイピングの実行間隔
+  pub list_page_interval_seconds: u64,
+  // 個別ページスクレイピングの実行間隔
+  pub detail_interval_seconds: u64,
 }
 
 /// 送信設定
