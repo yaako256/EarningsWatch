@@ -50,8 +50,10 @@ services:
     environment:
       # 実行環境ラベル(configのロードに使用)
       EARNINGSWATCH_ENV: dev
-      # 設定ファイルのパス
+      # 設定ファイルのフォルダパス
       EARNINGSWATCH_CONFIG_DIR: /workspace/config
+      # スクレイパーフォルダのパス
+      EARNINGSWATCH_SCRAPER_DIR: ../scripts
 
     volumes:
       # リポジトリ全体を見られるようにする。
@@ -69,8 +71,7 @@ services:
 
     # 127でホスト外からは見えない
     ports:
-      # 8080は使用済みなので8090に変更
-      - "127.0.0.1:8090:8090"
+      - "127.0.0.1:9010:9010"
 
     depends_on:
       db:
@@ -99,7 +100,7 @@ services:
       - ./frontend/node_modules:/workspace/frontend/node_modules
 
     ports:
-      - "5173:5173"
+      - "4010:5173"
 
     logging:
       driver: json-file

@@ -5,6 +5,7 @@ backend/crates/scraper/src/traits.rs
 
 // 標準ライブラリ
 use std::collections::HashSet;
+use std::path::Path;
 
 // 外部クレート
 use async_trait::async_trait;
@@ -26,5 +27,6 @@ pub trait ScraperService: Send + Sync {
   async fn fetch_earning_info(
     &self,
     known_fingerprints: HashSet<String>,
+    scraper_dir_path: &Path,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)>;
 }

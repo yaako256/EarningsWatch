@@ -9,6 +9,11 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
 pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
+  // スクレイパーフォルダのパスを取得
+  // (環境ごとに分かれるためcomposeで環境変数定義)
+  let scraper_dir_path =
+    std::env::var("EARNINGSWATCH_SCRAPER_DIR").expect("failed to load scraper_dir_path");
+
   // monitor起動時にSqlLayer+MemoryLayerを登録する
   let (sql_layer, _writer_handle) = logging::SqlLayer::new(
     logging::LogProcess::Monitor,
@@ -42,6 +47,7 @@ pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
     &earnings_repo,
     &queue_repo,
     &system_run_repo,
+    &scraper_dir_path,
     recent_fingerprint_limit,
   )
   .await;

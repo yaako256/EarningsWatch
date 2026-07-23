@@ -69,6 +69,7 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
   async fn list_by_group_id(
     &self,
     group_id: GroupId,
+    status: Option<NotifyStatus>,
     page: u32,
     per_page: u32,
   ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)> {
@@ -79,10 +80,12 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
       NotifyHistoryRow,
       r#"
       SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
-      FROM notify_history WHERE group_id = $1
-      ORDER BY sent_at DESC LIMIT $2 OFFSET $3
+      FROM notify_history
+      WHERE group_id = $1 AND ($2::notify_status IS NULL OR status = $2)
+      ORDER BY sent_at DESC LIMIT $3 OFFSET $4
       "#,
       group_id.as_uuid(),
+      status as Option<NotifyStatus>,
       limit,
       offset
     )
@@ -91,8 +94,13 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
     .map_err(map_error)?;
 
     let total_count = sqlx::query_scalar!(
-      r#"SELECT COUNT(*) as "count!" FROM notify_history WHERE group_id = $1"#,
-      group_id.as_uuid()
+      r#"
+      SELECT COUNT(*) as "count!"
+      FROM notify_history
+      WHERE group_id = $1
+        AND ($2::notify_status IS NULL OR status = $2)"#,
+      group_id.as_uuid(),
+      status as Option<NotifyStatus>,
     )
     .fetch_one(&self.pool)
     .await
@@ -106,6 +114,7 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
 
   async fn list_all(
     &self,
+    status: Option<NotifyStatus>,
     page: u32,
     per_page: u32,
   ) -> RepositoryResult<(Vec<NotifyHistoryEntry>, i64)> {
@@ -117,8 +126,10 @@ impl NotifyHistoryRepository for PgNotifyHistoryRepository {
       r#"
       SELECT id, group_id, fingerprint, sent_at, status as "status: NotifyStatus"
       FROM notify_history
-      ORDER BY sent_at DESC LIMIT $1 OFFSET $2
+      WHERE ($1::notify_status IS NULL OR status = $1)
+      ORDER BY sent_at DESC LIMIT $2 OFFSET $3
       "#,
+      status as Option<NotifyStatus>,
       limit,
       offset
     )

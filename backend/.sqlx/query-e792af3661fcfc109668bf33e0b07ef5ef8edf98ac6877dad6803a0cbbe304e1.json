@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n      SELECT id, group_id, fingerprint, sent_at, status as \"status: NotifyStatus\"\n      FROM notify_history WHERE group_id = $1\n      ORDER BY sent_at DESC LIMIT $2 OFFSET $3\n      ",
+  "query": "\n      SELECT id, group_id, fingerprint, sent_at, status as \"status: NotifyStatus\"\n      FROM notify_history\n      WHERE group_id = $1 AND ($2::notify_status IS NULL OR status = $2)\n      ORDER BY sent_at DESC LIMIT $3 OFFSET $4\n      ",
   "describe": {
     "columns": [
       {
@@ -43,6 +43,18 @@
     "parameters": {
       "Left": [
         "Uuid",
+        {
+          "Custom": {
+            "name": "notify_status",
+            "kind": {
+              "Enum": [
+                "ready",
+                "sent",
+                "failed"
+              ]
+            }
+          }
+        },
         "Int8",
         "Int8"
       ]
@@ -55,5 +67,5 @@
       false
     ]
   },
-  "hash": "72759748d397848464582c3edfa02766b4e50bc1f570cd67b584b4119662b0ad"
+  "hash": "e792af3661fcfc109668bf33e0b07ef5ef8edf98ac6877dad6803a0cbbe304e1"
 }
