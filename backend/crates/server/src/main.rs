@@ -117,13 +117,13 @@ async fn main() {
     .expect("failed to bind address");
 
   // デバッグ: SqlLayerログの動作確認
-  for i in 1..=50 - 2 - 4 + 1 {
-    tracing::info!(index = i, "SqlLayer test");
-  }
-  tracing::debug!("tracing debug test");
-  tracing::info!("tracing info test");
-  tracing::warn!("tracing warn test");
-  tracing::error!("tracing error test");
+  // for i in 1..=50 - 2 - 4 + 1 {
+  //   tracing::info!(index = i, "SqlLayer test");
+  // }
+  // tracing::debug!("tracing debug test");
+  // tracing::info!("tracing info test");
+  // tracing::warn!("tracing warn test");
+  // tracing::error!("tracing error test");
 
   // 起動確認用ログ
   tracing::info!("Starting EarningWatch server");
