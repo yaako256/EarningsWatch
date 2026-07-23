@@ -26,6 +26,7 @@ impl ScraperService for DebugScraper {
   async fn fetch_earning_info(
     &self,
     known_fingerprints: HashSet<String>,
+    _max_pages: Option<u32>,
     scraper_dir_path: &Path,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)> {
     let mut new_items = Vec::new();

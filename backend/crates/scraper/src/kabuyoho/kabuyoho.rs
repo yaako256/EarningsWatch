@@ -38,6 +38,7 @@ impl ScraperService for KabuyohoScraper {
   async fn fetch_earning_info(
     &self,
     known_fingerprints: HashSet<String>,
+    max_pages: Option<u32>,
     scraper_dir_path: &Path,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)> {
     let mut new_items = Vec::new();
@@ -83,6 +84,13 @@ impl ScraperService for KabuyohoScraper {
       // 既知が1件でもあればページ送り打ち切り
       if !all_new_this_page {
         break;
+      }
+
+      // 指定された最大ページ数に達したら終了
+      if let Some(max) = max_pages {
+        if page >= max {
+          break;
+        }
       }
 
       page += 1;

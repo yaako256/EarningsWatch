@@ -46,7 +46,7 @@ pub async fn run_monitor(
 
   // スクレイピング処理(監視処理)
   let (new_earnings, new_fingerprints) = scraper
-    .fetch_earning_info(known_fingerprints, scraper_dir_path.as_ref())
+    .fetch_earning_info(known_fingerprints, None, scraper_dir_path.as_ref())
     .await
     .map_err(|e| AppError::ScraperError(e.to_string()))?;
 

@@ -27,6 +27,7 @@ pub trait ScraperService: Send + Sync {
   async fn fetch_earning_info(
     &self,
     known_fingerprints: HashSet<String>,
+    max_pages: Option<u32>,
     scraper_dir_path: &Path,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)>;
 }

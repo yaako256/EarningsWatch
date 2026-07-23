@@ -25,8 +25,8 @@ pub async fn run_init(
   scraper_dir_path: impl AsRef<Path>,
 ) -> Result<InitRunResult, AppError> {
   let (earnings, fingerprints) = scraper
-    // 既知集合を空にすることで、直近分を全件取得させる
-    .fetch_earning_info(HashSet::new(), scraper_dir_path.as_ref())
+    // 既知集合を空にして、max_pageを1に設定することで、1ページ目のすべての情報を取得するようにinitさせる。
+    .fetch_earning_info(HashSet::new(), Some(1), scraper_dir_path.as_ref())
     .await
     .map_err(|e| AppError::ScraperError(e.to_string()))?;
 
