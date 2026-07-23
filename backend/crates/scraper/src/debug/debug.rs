@@ -5,6 +5,7 @@ backend/crates/scraper/src/debug/debug.rs
 
 // 標準ライブラリ
 use std::collections::HashSet;
+use std::path::Path;
 
 // 外部クレート
 use async_trait::async_trait;
@@ -25,6 +26,7 @@ impl ScraperService for DebugScraper {
   async fn fetch_earning_info(
     &self,
     known_fingerprints: HashSet<String>,
+    scraper_dir_path: &Path,
   ) -> ScraperResult<(Vec<Earnings>, Vec<String>)> {
     let mut new_items = Vec::new();
     // let mut page = 1u32;
@@ -34,7 +36,7 @@ impl ScraperService for DebugScraper {
     // 新規ページがなくなるまでループ取得する
     // fingerprintは一覧段階でのみ計算する
     loop {
-      let items = fetch_list(page).await?;
+      let items = fetch_list(page, scraper_dir_path).await?;
 
       if items.is_empty() {
         break;
@@ -79,7 +81,7 @@ impl ScraperService for DebugScraper {
     let mut new_fingerprints: Vec<String> = Vec::with_capacity(new_items.len());
 
     for (item, fingerprint, evaluation) in new_items {
-      let mut detail = fetch_detail(&item.url).await?;
+      let mut detail = fetch_detail(&item.url, scraper_dir_path).await?;
 
       // 一覧段階のevaluationを最終的な保存値としても採用する(fingerprintとの整合性維持)
       detail.evaluation = evaluation;
@@ -94,10 +96,13 @@ impl ScraperService for DebugScraper {
   }
 }
 
-async fn fetch_list(page: u32) -> ScraperResult<Vec<DebugListItem>> {
+async fn fetch_list(page: u32, scraper_dir_path: &Path) -> ScraperResult<Vec<DebugListItem>> {
+  // Python スクリプトへのパスを組み立てる
+  let script_path = scraper_dir_path.join("debug/debug.py");
+
   // 一覧ページを取得
   let output = tokio::process::Command::new("python3")
-    .arg("../scripts/debug/debug.py")
+    .arg(&script_path)
     .arg("list")
     .arg("--page")
     .arg(page.to_string())
@@ -120,10 +125,13 @@ async fn fetch_list(page: u32) -> ScraperResult<Vec<DebugListItem>> {
   Ok(parsed.items)
 }
 
-async fn fetch_detail(url: &str) -> ScraperResult<Earnings> {
+async fn fetch_detail(url: &str, scraper_dir_path: &Path) -> ScraperResult<Earnings> {
+  // Python スクリプトへのパスを組み立てる
+  let script_path = scraper_dir_path.join("debug/debug.py");
+
   // 個別ページのスクレイピング処理
   let output = tokio::process::Command::new("python3")
-    .arg("../scripts/debug/debug.py")
+    .arg(&script_path)
     .arg("detail")
     .arg("--url")
     .arg(url)

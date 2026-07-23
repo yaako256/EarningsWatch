@@ -50,8 +50,10 @@ services:
     environment:
       # 実行環境ラベル(configのロードに使用)
       EARNINGSWATCH_ENV: dev
-      # 設定ファイルのパス
+      # 設定ファイルのフォルダパス
       EARNINGSWATCH_CONFIG_DIR: /workspace/config
+      # スクレイパーフォルダのパス
+      EARNINGSWATCH_SCRAPER_DIR: ../scripts
 
     volumes:
       # リポジトリ全体を見られるようにする。

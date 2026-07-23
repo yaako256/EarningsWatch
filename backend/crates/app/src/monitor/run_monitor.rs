@@ -5,6 +5,7 @@ monitor処理をするユースケース
 
 // 標準ライブラリ
 use std::collections::HashSet;
+use std::path::Path;
 use std::time::Instant;
 
 // 外部クレート
@@ -28,6 +29,7 @@ pub async fn run_monitor(
   earnings_repo: &dyn EarningsRepository,
   queue_repo: &dyn NotifyQueueRepository,
   system_run_repo: &dyn SystemRunRepository,
+  scraper_dir_path: impl AsRef<Path>,
   recent_fingerprint_limit: u32,
 ) -> Result<MonitorRunResult, AppError> {
   let run_at = Utc::now();
@@ -44,7 +46,7 @@ pub async fn run_monitor(
 
   // スクレイピング処理(監視処理)
   let (new_earnings, new_fingerprints) = scraper
-    .fetch_earning_info(known_fingerprints)
+    .fetch_earning_info(known_fingerprints, scraper_dir_path.as_ref())
     .await
     .map_err(|e| AppError::ScraperError(e.to_string()))?;
 
