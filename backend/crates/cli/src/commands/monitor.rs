@@ -8,7 +8,12 @@ use sqlx::PgPool;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 
-pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
+pub async fn run(
+  pool: &PgPool,
+  recent_fingerprint_limit: u32,
+  list_page_interval_seconds: u64,
+  detail_interval_seconds: u64,
+) {
   // スクレイパーフォルダのパスを取得
   // (環境ごとに分かれるためcomposeで環境変数定義)
   let scraper_dir_path =
@@ -37,7 +42,9 @@ pub async fn run(pool: &PgPool, recent_fingerprint_limit: u32) {
     .with(tracing_subscriber::fmt::layer())
     .init();
 
-  let scraper = scraper::DebugScraper;
+  // let scraper = scraper::DebugScraper;
+  let scraper = scraper::KabuyohoScraper::new(list_page_interval_seconds, detail_interval_seconds);
+
   let earnings_repo = infra::PgEarningsRepository::new(pool.clone());
   let queue_repo = infra::PgNotifyQueueRepository::new(pool.clone());
   let system_run_repo = infra::PgSystemRunRepository::new(pool.clone());

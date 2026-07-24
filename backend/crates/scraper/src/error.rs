@@ -1,5 +1,5 @@
 /*
-backend/crates/config/src/error.rs
+backend/crates/scraper/src/error.rs
 scraperクレートのエラー型の定義
 */
 

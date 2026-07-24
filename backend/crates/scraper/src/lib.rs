@@ -4,12 +4,14 @@
 
 // スクレイパー
 mod debug;
+mod kabuyoho;
 // その他定義
 mod error;
 mod traits;
 
 // 各スクレイパーを再エクスポートで公開
 pub use debug::DebugScraper;
+pub use kabuyoho::KabuyohoScraper;
 
 // その他再エクスポート
 pub use error::ScraperError;

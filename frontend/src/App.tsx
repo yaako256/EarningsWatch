@@ -1,14 +1,15 @@
-import './App.css'
+// frontend/src/App.tsx
+import { useState } from "react";
+import { LoginForm } from "./components/LoginForm";
+import { ApiRequestForm } from "./components/ApiRequestForm";
 
-function App() {
+export default function App() {
+  const [loggedIn, setLoggedIn] = useState(false);
+
   return (
     <div>
-      <h1>EarningsWatch (frontend WIP)</h1>
-      <p>
-        簡易汎用フォーム(ログイン画面 + 任意API送信フォーム)はPhase 13で実装する。
-      </p>
+      <h1>EarningsWatch</h1>
+      {loggedIn ? <ApiRequestForm /> : <LoginForm onLoggedIn={() => setLoggedIn(true)} />}
     </div>
   );
 }
-
-export default App
