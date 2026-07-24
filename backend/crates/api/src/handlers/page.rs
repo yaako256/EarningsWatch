@@ -179,6 +179,7 @@ pub async fn create_page(
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdatePageRequest {
   pub title: String,
   pub content_markdown: String,

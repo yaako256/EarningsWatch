@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// 決算評価列挙型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "earnings_evaluation", rename_all = "UPPERCASE")]
 pub enum EarningsEvaluation {
   Positive,

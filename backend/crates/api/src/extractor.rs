@@ -8,6 +8,7 @@ use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum_extra::extract::CookieJar;
+use serde::{Deserialize, Serialize};
 
 //内部ライブラリ
 use auth::{Role, verify_access_token};
@@ -19,6 +20,8 @@ use crate::error::ApiAppError;
 use crate::response::ApiErrorCode;
 use crate::state::AppState;
 
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct AuthUser {
   pub user_id: UserId,
   pub role: Role,
