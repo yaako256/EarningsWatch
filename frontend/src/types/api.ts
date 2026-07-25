@@ -1,0 +1,12 @@
+export type Role = 'admin' | 'user'
+export type User = { username: string; role: Role }
+export type PageResult<T> = { items: T[]; page: number; perPage: number; totalCount: number; totalPages: number }
+export type Group = { id:string; name:string; medium:'discord'|'slack'; pausedAt:string|null; createdAt:string; updatedAt:string }
+export type GroupConfig = { medium:'discord'|'slack'; webhookUrl:string|null; embedColor?:string|null; mentionEnabled:boolean; mentionTargets:string[] }
+export type Filter = { id:string; groupId:string; ticker:string; companyName:string; notes:string|null; enabled:boolean }
+export type Earnings = { id:number;ticker:string;companyName:string;publishedAt:string;title:string;url:string;summary:string;evaluation:'positive'|'neutral'|'negative'|'unrated' }
+export type NotifyHistory = { id:number;groupId:string|null;groupName:string|null;fingerprint:string;sentAt:string;status:'ready'|'sent'|'failed' }
+export type Dashboard = { groupCount:number;filterCount:number;uniqueTickerCount:number;uniqueCompanyNameCount:number;mediumBreakdown:{discord:number;slack:number};pausedGroupCount:number;webhookMissingCount:number;recentSent:NotifyHistory[];recentFailed:NotifyHistory[] }
+export type PageListItem = { id:string;title:string;isPublished:boolean;createdAt:string;updatedAt:string;displayOrder:number|null;authorUsername:string }
+export type PageDetail = PageListItem & { type:'blog'|'static';contentMarkdown:string }
+export type LogEntry = { id:number;timestamp:string;level:string;process:string;target:string;message:string|null;fields:Record<string,unknown> }
