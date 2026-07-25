@@ -17,9 +17,8 @@
   --border: #26334d;
   --border-soft: #1b2438;
   --text: #e7ecf5;
-  --text-muted: #93a1bd;
+  --text-muted: #87ceeb;
   --text-faint: #5c6b8a;
-
   --accent: #d99a4e;
   --accent-strong: #f0b46a;
   --accent-soft: rgba(217, 154, 78, 0.14);
@@ -33,8 +32,17 @@
   --info: #6fb2e0;
 
   /* --- タイポグラフィ --- */
+  /*
   --font-body: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
   --font-heading: 'IBM Plex Mono', 'JetBrains Mono', ui-monospace, monospace;
+  */
+  /*
+  --font-body: system-ui, sans-serif;
+  --font-heading: system-ui, sans-serif;
+  */
+  --font-body: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-heading: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "Fira Code", "Cascadia Code", monospace;
 
   /* --- スペーシング(窮屈さの解消のため全体的にゆったり目) --- */
   --space-1: 4px;
@@ -242,6 +250,7 @@ label {
 
 .sidebar-logo-icon {
   font-size: 20px;
+  user-select: none;
 }
 
 .sidebar-logo-text {
@@ -400,6 +409,7 @@ label {
 .page-header .page-icon {
   font-size: 22px;
   line-height: 1;
+  user-select: none;
 }
 
 .page-header-actions {
@@ -635,6 +645,7 @@ tbody tr:hover {
   border: 0;
   background: transparent;
   padding: var(--space-1) var(--space-2);
+  user-select: none;
 }
 
 .inline-error {

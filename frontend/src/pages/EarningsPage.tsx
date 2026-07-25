@@ -21,10 +21,10 @@ import { Modal } from '../components/common/Modal'
 import type { Earnings, EarningsEvaluation } from '../types/api'
 
 const EVALUATION_LABEL: Record<EarningsEvaluation, string> = {
-  positive: 'ポジティブ',
-  neutral: 'ニュートラル',
-  negative: 'ネガティブ',
-  unrated: '未評価',
+  positive: 'Positive',
+  neutral: 'Nuetral',
+  negative: 'Negative',
+  unrated: 'Unrated',
 }
 
 function useDebounced<T>(value: T, delayMs: number): T {
@@ -90,14 +90,14 @@ export function EarningsPage() {
       <PageHeader icon="📈" title="決算情報" />
 
       <div className="filters">
-        <input placeholder="証券コード" value={ticker} onChange={(e) => setTicker(e.target.value)} />
+        <input placeholder="証券コード(完全一致)" value={ticker} onChange={(e) => setTicker(e.target.value)} />
         <input placeholder="銘柄名" value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
         <select value={evaluation} onChange={(e) => setEvaluation(e.target.value)}>
           <option value="">すべての評価</option>
-          <option value="positive">ポジティブ</option>
-          <option value="neutral">ニュートラル</option>
-          <option value="negative">ネガティブ</option>
-          <option value="unrated">未評価</option>
+          <option value="positive">Positive</option>
+          <option value="neutral">Neutral</option>
+          <option value="negative">Negative</option>
+          <option value="unrated">Unrated</option>
         </select>
         <label style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 6, margin: 0 }}>
           <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>公開日 from</span>
@@ -124,11 +124,11 @@ export function EarningsPage() {
         <table>
           <thead>
             <tr>
+              <th>証券コード</th>
+              <th>銘柄名</th>
               <th>公開日時</th>
               <th>評価</th>
               <th>タイトル</th>
-              <th>証券コード</th>
-              <th>銘柄名</th>
             </tr>
           </thead>
           <tbody>
@@ -147,11 +147,11 @@ export function EarningsPage() {
                 onClick={() => setDetail(item)}
                 style={{ cursor: 'pointer' }}
               >
+                <td>{item.ticker}</td>
+                <td>{item.companyName}</td>
                 <td>{formatDateTime(item.publishedAt)}</td>
                 <td>{EVALUATION_LABEL[item.evaluation]}</td>
                 <td>{item.title}</td>
-                <td>{item.ticker}</td>
-                <td>{item.companyName}</td>
               </tr>
             ))}
           </tbody>

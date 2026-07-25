@@ -36,11 +36,11 @@ export function DashboardPage() {
               <strong>{formatNumber(data.groupCount)}</strong>
             </div>
             <div className="card">
-              <small>├ Discord</small>
+              <small>グループ数(Discord)</small>
               <strong>{formatNumber(data.mediumBreakdown.discord)}</strong>
             </div>
             <div className="card">
-              <small>└ Slack</small>
+              <small>グループ数(Slack)</small>
               <strong>{formatNumber(data.mediumBreakdown.slack)}</strong>
             </div>
             <div className="card">
@@ -60,11 +60,11 @@ export function DashboardPage() {
               <strong>{formatNumber(data.filterCount)}</strong>
             </div>
             <div className="card">
-              <small>├ ユニーク証券コード数</small>
+              <small>ユニーク証券コード数</small>
               <strong>{formatNumber(data.uniqueTickerCount)}</strong>
             </div>
             <div className="card">
-              <small>└ ユニーク銘柄数</small>
+              <small>ユニーク銘柄数</small>
               <strong>{formatNumber(data.uniqueCompanyNameCount)}</strong>
             </div>
           </div>
