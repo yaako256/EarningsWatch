@@ -99,6 +99,7 @@ pub async fn create_filter(
 
 // ─── PUT /api/groups/{id}/filters/{filter_id} ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct UpdateFilterRequest {
   pub ticker: String,
   pub company_name: String,
@@ -177,6 +178,7 @@ pub async fn delete_filter(
 
 // ─── POST bulk-enable / bulk-disable / bulk-delete ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BulkFilterIdsRequest {
   pub filter_ids: Vec<FilterId>,
 }
@@ -285,6 +287,7 @@ pub struct ImportFilterRow {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImportFiltersRequest {
   pub rows: Vec<ImportFilterRow>,
   #[serde(default)]
@@ -392,6 +395,7 @@ pub async fn import_filters(
 
 // ─── POST /api/groups/{id}/filters/import(グループ単位) ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImportGroupFilterRow {
   pub ticker: String,
   pub company_name: String,
@@ -400,6 +404,7 @@ pub struct ImportGroupFilterRow {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ImportGroupFiltersRequest {
   pub rows: Vec<ImportGroupFilterRow>,
   #[serde(default)]

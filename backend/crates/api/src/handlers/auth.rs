@@ -1,3 +1,4 @@
+use auth::Role;
 /*
 backend/crates/api/src/handlers/auth.rs
 認証系のハンドラ
@@ -26,6 +27,7 @@ pub struct LoginRequest {
 #[derive(Serialize)]
 pub struct LoginResponse {
   pub username: String,
+  pub role: Role,
 }
 
 pub async fn login(
@@ -61,6 +63,7 @@ pub async fn login(
     jar,
     Json(ApiResponse::ok(LoginResponse {
       username: output.username,
+      role: output.role,
     })),
   ))
 }
@@ -123,6 +126,7 @@ pub async fn logout(
 #[derive(Serialize)]
 pub struct MeResponse {
   pub username: String,
+  pub role: Role,
 }
 
 pub async fn me(
@@ -138,5 +142,6 @@ pub async fn me(
 
   Ok(Json(ApiResponse::ok(MeResponse {
     username: user.username,
+    role: user.role,
   })))
 }

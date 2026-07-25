@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 /// ロールの列挙型
 // DB: users.role TEXT('admin'|'user')
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "text", rename_all = "lowercase")]
 pub enum Role {
   Admin,

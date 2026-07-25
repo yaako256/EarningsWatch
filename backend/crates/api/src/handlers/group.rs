@@ -233,6 +233,7 @@ pub async fn put_group_config(
 
 // ─── POST /api/groups/{id}/config/test-send ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TestSendRequest {
   pub ticker: Option<String>,
   pub company_name: Option<String>,
@@ -282,6 +283,7 @@ pub async fn test_send(
 
 // ─── PUT /api/groups/bulk-destination ───
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct BulkDestinationRequest {
   pub group_ids: Vec<GroupId>,
   pub config: GroupConfigDto,

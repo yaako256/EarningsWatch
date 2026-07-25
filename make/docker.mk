@@ -2,7 +2,7 @@
 # ==================================================
 ### Docker
 # ==================================================
-.PHONY: up down stop build recreate restart logs ps
+.PHONY: up down stop build recreate restart logs ps ls
 
 ## コンテナ起動
 # buildも実施する
@@ -35,7 +35,7 @@ restart:
 logs:
 	$(COMPOSE) logs -f
 
-## コンテナ一覧
+## 稼働中のコンテナ一覧
 ps:
 	$(COMPOSE) ps
 

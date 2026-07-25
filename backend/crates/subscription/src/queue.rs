@@ -12,6 +12,7 @@ use earnings::{EarningsEvaluation, EarningsSource};
 
 /// 送信statusの列挙型
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "notify_status", rename_all = "lowercase")]
 pub enum NotifyStatus {
   Ready,

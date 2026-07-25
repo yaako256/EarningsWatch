@@ -10,6 +10,7 @@ use serde_json::Value as JsonValue;
 
 // DB: logs.level VARCHAR(5) CHECK(...)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "text", rename_all = "UPPERCASE")]
 pub enum LogLevel {
   Trace,
@@ -39,6 +40,7 @@ impl LogLevel {
 /// どこのログかの列挙
 // DB: logs.process log_process enum('server'|'monitor'|'notify')
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, sqlx::Type)]
+#[serde(rename_all = "camelCase")]
 #[sqlx(type_name = "log_process", rename_all = "lowercase")]
 pub enum LogProcess {
   Server,
