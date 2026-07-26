@@ -67,7 +67,7 @@ export function GroupsPage() {
   // API設計書7.3節: /filters/export は format クエリ(現状xlsxのみ)が必須。
   const handleExport = async () => {
     try {
-      await downloadFile(`/filters/export?${qs({ format: 'xlsx' })}`, exportFileName('allfilters.xlsx'))
+      await downloadFile(`/filters/export?${qs({ format: 'xlsx' })}`, exportFileName('all_group_filters.xlsx'))
     } catch {
       showToast('error', 'エクスポートに失敗しました。')
     }
