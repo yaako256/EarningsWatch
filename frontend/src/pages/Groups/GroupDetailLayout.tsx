@@ -6,7 +6,7 @@
 //      「フィルタをメインにしたい」という明確な変更希望があったため、デフォルト遷移先も合わせて変更する)
 //   - 「一覧に戻る」ボタンをページ見出し付近に追加(以前はサイドバー経由でしか戻れなかった)
 
-import { Link, Navigate, Outlet, useParams, useLocation } from 'react-router-dom'
+import { Link, Navigate, Outlet, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useAsync } from '../../hooks/useAsync'
 import { fetchGroups } from '../../api/groups'
 import { ErrorState } from '../../components/common/States'
@@ -14,6 +14,7 @@ import { ErrorState } from '../../components/common/States'
 export function GroupDetailLayout() {
   const { groupId } = useParams<{ groupId: string }>()
   const location = useLocation()
+  const navigate = useNavigate()
   const { data: groups, isLoading, error, reload } = useAsync(fetchGroups, [])
 
   const group = groups?.find((g) => g.id === groupId)
@@ -44,13 +45,21 @@ export function GroupDetailLayout() {
         </div>
       </div>
 
+      {/* タブ切り替えはページ遷移そのものが目的ではなくUI操作のため、Linkではなくボタン+navigateで実装する
+          (ホバー時にブラウザ左下へURLが表示されるのを避けるため)。 */}
       <div className="tabs">
-        <Link to={`/groups/${groupId}/filters`}>
-          <button className={activeTab === 'filters' ? 'active' : ''}>フィルタ</button>
-        </Link>
-        <Link to={`/groups/${groupId}/settings`}>
-          <button className={activeTab === 'settings' ? 'active' : ''}>設定</button>
-        </Link>
+        <button
+          className={activeTab === 'filters' ? 'active' : ''}
+          onClick={() => navigate(`/groups/${groupId}/filters`)}
+        >
+          フィルタ
+        </button>
+        <button
+          className={activeTab === 'settings' ? 'active' : ''}
+          onClick={() => navigate(`/groups/${groupId}/settings`)}
+        >
+          設定
+        </button>
       </div>
 
       <Outlet context={{ group, reloadGroups: reload }} />

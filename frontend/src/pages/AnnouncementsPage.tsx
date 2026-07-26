@@ -1,10 +1,14 @@
-// お知らせ板画面。設計書9.8節 + 改善点まとめ資料 対応。
+// お知らせ板画面。設計書9.8節 + 改善点まとめ資料(Ver1・Ver2) 対応。
 //
-// 改善点資料への対応:
+// Ver1改善点への対応:
 //   - 本文はMarkdownとしてきちんとレンダリングする(以前は#等がそのまま出力されていた)
 //   - staticページの並べ替えは、ドラッグ中の行がカーソルに追従し、ドラッグ中もリアルタイムで
 //     順序が入れ替わるように動作させる
 //   - 一覧のヘッダー(タイトル/状態/作成者の列)のずれを修正する
+// Ver2改善点への対応:
+//   - タブ(blog/static)の状態をURLクエリに保持し、固定ページ詳細から戻ったときに
+//     固定ページ一覧に戻れるようにする(以前はblogタブに固定で戻ってしまっていた)
+//   - 一覧上の「編集」は別ページに遷移せず、一覧の上にモーダルを開いたまま編集できるようにする
 
 import { useMemo, useState } from 'react'
 import type { DragEvent } from 'react'
@@ -41,7 +45,9 @@ export function AnnouncementsPage() {
 function AnnouncementList() {
   const { user } = useAuth()
   const isAdmin = user?.role === 'admin'
-  const [tab, setTab] = useState<PageType>('blog')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const tab: PageType = searchParams.get('type') === 'static' ? 'static' : 'blog'
+  const setTab = (next: PageType) => setSearchParams({ type: next })
   const { showToast } = useToast()
 
   const { data, isLoading, error, reload } = useAsync(() => fetchPageList(tab), [tab])
@@ -51,6 +57,7 @@ function AnnouncementList() {
   )
 
   const [showCreate, setShowCreate] = useState(false)
+  const [editTarget, setEditTarget] = useState<PageListItem | undefined>(undefined)
   const [deleteTarget, setDeleteTarget] = useState<PageListItem | undefined>(undefined)
   const [orderedItems, setOrderedItems] = useState<PageListItem[] | undefined>(undefined)
   const [draggingId, setDraggingId] = useState<string | undefined>(undefined)
@@ -153,7 +160,7 @@ function AnnouncementList() {
                   </td>
                 )}
                 <td>
-                  <Link className="link" to={`/announcements/${item.id}`}>
+                  <Link className="link" to={`/announcements/${item.id}?type=${tab}`}>
                     {item.title}
                   </Link>
                 </td>
@@ -169,9 +176,7 @@ function AnnouncementList() {
                 {isAdmin && (
                   <td>
                     <div className="cell-actions">
-                      <Link className="link" to={`/announcements/${item.id}?edit=true`}>
-                        編集
-                      </Link>
+                      <button onClick={() => setEditTarget(item)}>編集</button>
                       <button className="danger-button" onClick={() => setDeleteTarget(item)}>
                         削除
                       </button>
@@ -190,6 +195,19 @@ function AnnouncementList() {
           onClose={() => setShowCreate(false)}
           onSaved={() => {
             setShowCreate(false)
+            reload()
+          }}
+        />
+      )}
+
+      {/* Ver2改善点対応: 編集は一覧ページ上のモーダルで完結させ、詳細ページへは遷移しない */}
+      {editTarget && (
+        <AnnouncementEditModalById
+          id={editTarget.id}
+          type={tab}
+          onClose={() => setEditTarget(undefined)}
+          onSaved={() => {
+            setEditTarget(undefined)
             reload()
           }}
         />
@@ -217,12 +235,47 @@ function AnnouncementList() {
   )
 }
 
+/** 一覧の「編集」から呼ばれる版。詳細データを取得してからモーダルを表示する。 */
+function AnnouncementEditModalById({
+  id,
+  type,
+  onClose,
+  onSaved,
+}: {
+  id: string
+  type: PageType
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const { data, isLoading, error } = useAsync(() => fetchPageDetail(id), [id])
+
+  if (isLoading) {
+    return (
+      <Modal title="編集" onClose={onClose}>
+        <p className="loading">
+          <i /> 読み込み中...
+        </p>
+      </Modal>
+    )
+  }
+  if (error || !data) {
+    return (
+      <Modal title="編集" onClose={onClose}>
+        <ErrorState message={error ?? '取得に失敗しました。'} />
+      </Modal>
+    )
+  }
+
+  return <AnnouncementEditModal type={type} initial={data} onClose={onClose} onSaved={onSaved} />
+}
+
 function AnnouncementDetail() {
   const { id } = useParams<{ id: string }>()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const isEditing = searchParams.get('edit') === 'true'
+  const [searchParams] = useSearchParams()
+  // 一覧のどのタブから遷移してきたかをクエリで保持し、「一覧に戻る」で同じタブに戻れるようにする
+  // (Ver2改善点対応: 以前は固定ページ詳細から戻ると常にblogタブに戻ってしまっていた)。
+  const originTab: PageType = searchParams.get('type') === 'static' ? 'static' : 'blog'
   const navigate = useNavigate()
-  const { user } = useAuth()
 
   const { data, isLoading, error, reload } = useAsync(() => fetchPageDetail(id!), [id])
 
@@ -237,7 +290,11 @@ function AnnouncementDetail() {
 
   return (
     <div>
-      <button className="link" onClick={() => navigate('/announcements')} style={{ marginBottom: 16 }}>
+      <button
+        className="link"
+        onClick={() => navigate(`/announcements?type=${originTab}`)}
+        style={{ marginBottom: 16 }}
+      >
         ← 一覧に戻る
       </button>
       <h1>{data.title}</h1>
@@ -245,24 +302,6 @@ function AnnouncementDetail() {
         {formatDateTime(data.updatedAt)} ・ {data.authorUsername}
       </p>
       <div className="markdown-body" dangerouslySetInnerHTML={{ __html: renderMarkdown(data.contentMarkdown) }} />
-
-      {user?.role === 'admin' && !isEditing && (
-        <button style={{ marginTop: 16 }} onClick={() => setSearchParams({ edit: 'true' })}>
-          編集
-        </button>
-      )}
-
-      {isEditing && (
-        <AnnouncementEditModal
-          type={data.type}
-          initial={data}
-          onClose={() => setSearchParams({})}
-          onSaved={() => {
-            setSearchParams({})
-            reload()
-          }}
-        />
-      )}
     </div>
   )
 }

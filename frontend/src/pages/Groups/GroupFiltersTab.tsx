@@ -197,7 +197,9 @@ export function GroupFiltersTab() {
                 )}
                 <td>{filter.ticker}</td>
                 <td>{filter.companyName}</td>
-                <td>{filter.notes || '-'}</td>
+                <td className="cell-notes" title={filter.notes ?? undefined}>
+                  {filter.notes || '-'}
+                </td>
                 <td>
                   {filter.enabled ? (
                     <span className="badge good">有効</span>
@@ -258,7 +260,7 @@ export function GroupFiltersTab() {
       {showImport && (
         <ImportModal
           title={`フィルタの一括インポート(${group.name})`}
-          scopeHint="ticker・companyName・notes・enabled の列を持つCSV/Excelファイルを取り込みます。このグループ内のフィルタとして登録されます。"
+          scopeHint="このグループ内のフィルタとして登録されます。"
           onImport={(rows: ImportRow[], dryRun) => importFiltersForGroup(group.id, rows, dryRun)}
           onClose={() => setShowImport(false)}
           onImported={reload}

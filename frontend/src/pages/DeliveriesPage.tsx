@@ -1,29 +1,35 @@
 // 送信キュー/履歴ページ。設計書9.7節対応。
+// Ver2改善点対応: ページングUIを決算情報ページ等と同じAtCoderPagerに統一する。
 
 import { useState } from 'react'
-import { NavLink, Route, Routes, useSearchParams } from 'react-router-dom'
+import { Route, Routes, useNavigate, useLocation, useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/common/PageHeader'
 import { useAsync } from '../hooks/useAsync'
 import { fetchNotifyQueue, fetchNotifyHistory } from '../api/deliveries'
 import { fetchGroups } from '../api/groups'
 import { formatDateTime } from '../utils/format'
-import { SimplePager, AtCoderPager } from '../components/common/Pager'
+import { AtCoderPager } from '../components/common/Pager'
 import { EmptyState, LoadingRow, ErrorState } from '../components/common/States'
 import type { NotifyStatus } from '../types/api'
 
 const STATUS_LABEL: Record<NotifyStatus, string> = { ready: '送信待ち', sent: '送信済み', failed: '失敗' }
 
 export function DeliveriesPage() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const isHistory = location.pathname.endsWith('/history')
+
   return (
     <div>
       <PageHeader icon="📬" title="送信キュー/履歴" />
+      {/* タブ切り替えはUI操作のためLinkではなくボタン+navigateで実装する(ホバー時のURL表示を避けるため) */}
       <div className="tabs">
-        <NavLink to="/deliveries" end>
-          {({ isActive }) => <button className={isActive ? 'active' : ''}>キュー</button>}
-        </NavLink>
-        <NavLink to="/deliveries/history">
-          {({ isActive }) => <button className={isActive ? 'active' : ''}>履歴</button>}
-        </NavLink>
+        <button className={!isHistory ? 'active' : ''} onClick={() => navigate('/deliveries')}>
+          キュー
+        </button>
+        <button className={isHistory ? 'active' : ''} onClick={() => navigate('/deliveries/history')}>
+          履歴
+        </button>
       </div>
       <Routes>
         <Route index element={<QueueTab />} />
@@ -102,10 +108,10 @@ function QueueTab() {
         </table>
       )}
 
-      {data && (
-        <SimplePager
+      {data && data.totalPages > 1 && (
+        <AtCoderPager
           currentPage={page}
-          hasNext={data.items.length === data.perPage}
+          totalPages={data.totalPages}
           onChange={(p) => updateParams({ page: String(p) })}
         />
       )}

@@ -64,9 +64,12 @@ export function GroupsPage() {
     }
   }
 
+  // API設計書7.3節では「グループのエクスポート」というエンドポイントは存在せず、
+  // 全グループ分のフィルタをまとめてエクスポートする /filters/export が対応する機能。
+  // (以前の実装は存在しない /groups/export を呼んでおり、405エラーの原因になっていた)
   const handleExport = async () => {
     try {
-      await downloadFile('/groups/export', exportFileName('groups.xlsx'))
+      await downloadFile('/filters/export', exportFileName('filters.xlsx'))
     } catch {
       showToast('error', 'エクスポートに失敗しました。')
     }
@@ -80,7 +83,7 @@ export function GroupsPage() {
         actions={
           <>
             <button onClick={() => setShowImport(true)}>⇪ 一括インポート</button>
-            <button onClick={handleExport}>⇩ エクスポート</button>
+            <button onClick={handleExport}>⇩ 全フィルタをエクスポート</button>
             <button className="primary" onClick={() => setShowCreate(true)}>
               + グループを作成
             </button>
@@ -171,7 +174,7 @@ export function GroupsPage() {
       {showImport && (
         <ImportModal
           title="フィルタの一括インポート(全体)"
-          scopeHint="ticker・companyName・groupName・notes・enabled の列を持つCSV/Excelファイルを取り込みます。groupNameが既存グループ名と一致しない場合、新しいグループが作成されます。"
+          scopeHint="groupNameが既存グループ名と一致しない場合、新しいグループが作成されます。"
           onImport={(rows: ImportRow[], dryRun) => importFiltersGlobal(rows, dryRun)}
           onClose={() => setShowImport(false)}
           onImported={reload}

@@ -1,10 +1,14 @@
 // フィルタの一括インポートモーダル。全体版(グループ一覧画面)・グループ単位版(フィルタタブ)で共有する。
 // 設計書7.4節: ボタン押下→モーダル→ファイル選択/ドラッグ&ドロップで実行する。
+//
+// Ver2改善点対応: ネイティブの<input type="file">は「選択されていません」というテキスト部分も
+// クリック領域に含んでしまうため非表示にし、代わりに独自の「ファイルを選択」ボタンだけを
+// クリック可能にしてinput.click()を呼ぶ方式にする。
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { Modal } from './Modal'
-import { parseImportFile } from '../../utils/parseImportFile'
+import { parseImportFile, IMPORT_COLUMN_NAMES } from '../../utils/parseImportFile'
 import type { ImportResult, ImportRow } from '../../types/api'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -18,6 +22,7 @@ interface ImportModalProps {
 
 export function ImportModal({ title, scopeHint, onImport, onClose, onImported }: ImportModalProps) {
   const { showToast } = useToast()
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const [rows, setRows] = useState<ImportRow[] | undefined>(undefined)
   const [fileName, setFileName] = useState('')
   const [isDragOver, setIsDragOver] = useState(false)
@@ -65,6 +70,9 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
   return (
     <Modal title={title} onClose={onClose} wide>
       <p style={{ color: 'var(--text-muted)' }}>{scopeHint}</p>
+      <p style={{ color: 'var(--text-muted)', fontSize: 13 }}>
+        列見出し: {Object.values(IMPORT_COLUMN_NAMES).join(' / ')}
+      </p>
       <div
         onDragOver={(e) => {
           e.preventDefault()
@@ -84,17 +92,23 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
         {fileName ? (
           <span>選択中のファイル: {fileName}({rows?.length ?? 0}行)</span>
         ) : (
-          <span>ここにCSV/Excelファイルをドラッグ&ドロップ、または下のボタンで選択</span>
+          <span>ここにCSV/Excelファイルをドラッグ&ドロップ</span>
         )}
         <div style={{ marginTop: 12 }}>
+          {/* ネイティブinputは非表示にし、ボタンのみをクリック可能領域にする */}
           <input
+            ref={fileInputRef}
             type="file"
             accept=".csv,.xlsx,.xls"
+            style={{ display: 'none' }}
             onChange={(e) => {
               const file = e.target.files?.[0]
               if (file) void handleFile(file)
             }}
           />
+          <button type="button" onClick={() => fileInputRef.current?.click()}>
+            ファイルを選択
+          </button>
         </div>
       </div>
 

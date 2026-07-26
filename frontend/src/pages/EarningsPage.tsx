@@ -1,28 +1,27 @@
-// 決算情報ページ - 一覧。設計書9.2節 + 改善点まとめ資料 対応。
+// 決算情報ページ - 一覧。設計書9.2節 + 改善点まとめ資料(Ver1・Ver2) 対応。
 //
-// 改善点資料への対応:
-//   - 列順序: 評価は重要度が低いため、公開日時の後・タイトルの前に移動
-//   - 時間フィルタ: from/toの区別を明示し、カレンダー入力(type="date")のみを受け付ける
-//     (テキストでの直接入力を許さず、picker指定のみにすることで見づらさを回避)
-//   - 公式情報へのボタンは分かりやすい配色にする(以前は黒背景に青文字で視認性が低かった)
-//   - 詳細モーダルに公開日時・評価も表示する
-//   - 検索ボタンを廃止し、入力に応じて都度検索する(入力ごとに再検索されるのは仕様として妥当なため、
-//     「ボタンがあるのに機能しない」不整合を解消する方向で統一する)
+// Ver2改善点への対応:
+//   - エクスポートボタンが消失していたため復旧
+//   - 評価ラベルのtypo("Nuetral"→"Neutral")を修正
+//   - 評価色は行の背景色・専用バッジクラスと連動させ、行との対応が伝わるようにする
+//   - 詳細モーダル・カードは「証券コード/銘柄名」を上、「公開日時/評価」を下の順序に変更
 
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { PageHeader } from '../components/common/PageHeader'
 import { useAsync } from '../hooks/useAsync'
 import { fetchEarnings } from '../api/earnings'
-import { formatDateTime } from '../utils/format'
+import { formatDateTime, exportFileName } from '../utils/format'
 import { AtCoderPager } from '../components/common/Pager'
 import { EmptyState, LoadingRow, ErrorState } from '../components/common/States'
 import { Modal } from '../components/common/Modal'
+import { downloadFile } from '../api/client'
+import { useToast } from '../contexts/ToastContext'
 import type { Earnings, EarningsEvaluation } from '../types/api'
 
 const EVALUATION_LABEL: Record<EarningsEvaluation, string> = {
   positive: 'Positive',
-  neutral: 'Nuetral',
+  neutral: 'Neutral',
   negative: 'Negative',
   unrated: 'Unrated',
 }
@@ -39,6 +38,7 @@ function useDebounced<T>(value: T, delayMs: number): T {
 export function EarningsPage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const page = Number(searchParams.get('page') ?? '1')
+  const { showToast } = useToast()
 
   const [ticker, setTicker] = useState(searchParams.get('ticker') ?? '')
   const [companyName, setCompanyName] = useState(searchParams.get('company_name') ?? '')
@@ -85,9 +85,21 @@ export function EarningsPage() {
     setSearchParams(next)
   }
 
+  const handleExport = async () => {
+    try {
+      await downloadFile('/earnings/export', exportFileName('earnings.xlsx'))
+    } catch {
+      showToast('error', 'エクスポートに失敗しました。')
+    }
+  }
+
   return (
     <div>
-      <PageHeader icon="📈" title="決算情報" />
+      <PageHeader
+        icon="📈"
+        title="決算情報"
+        actions={<button onClick={handleExport}>⇩ エクスポート</button>}
+      />
 
       <div className="filters">
         <input placeholder="証券コード(完全一致)" value={ticker} onChange={(e) => setTicker(e.target.value)} />
@@ -150,7 +162,9 @@ export function EarningsPage() {
                 <td>{item.ticker}</td>
                 <td>{item.companyName}</td>
                 <td>{formatDateTime(item.publishedAt)}</td>
-                <td>{EVALUATION_LABEL[item.evaluation]}</td>
+                <td>
+                  <EvaluationBadge evaluation={item.evaluation} />
+                </td>
                 <td>{item.title}</td>
               </tr>
             ))}
@@ -174,9 +188,11 @@ export function EarningsPage() {
               className={`earning-card ${item.evaluation}`}
               onClick={() => setDetail(item)}
             >
-              <small>{formatDateTime(item.publishedAt)} ・ {EVALUATION_LABEL[item.evaluation]}</small>
-              <strong>{item.title}</strong>
               <span>{item.ticker} {item.companyName}</span>
+              <strong>{item.title}</strong>
+              <small>
+                {formatDateTime(item.publishedAt)} ・ <EvaluationBadge evaluation={item.evaluation} />
+              </small>
             </button>
           ))}
         </div>
@@ -191,18 +207,14 @@ export function EarningsPage() {
   )
 }
 
+function EvaluationBadge({ evaluation }: { evaluation: EarningsEvaluation }) {
+  return <span className={`badge eval-${evaluation}`}>{EVALUATION_LABEL[evaluation]}</span>
+}
+
 function EarningsDetailModal({ item, onClose }: { item: Earnings; onClose: () => void }) {
   return (
     <Modal title={item.title} onClose={onClose}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
-        <div>
-          <small style={{ color: 'var(--text-muted)' }}>公開日時</small>
-          <div>{formatDateTime(item.publishedAt)}</div>
-        </div>
-        <div>
-          <small style={{ color: 'var(--text-muted)' }}>評価</small>
-          <div>{EVALUATION_LABEL[item.evaluation]}</div>
-        </div>
         <div>
           <small style={{ color: 'var(--text-muted)' }}>証券コード</small>
           <div>{item.ticker}</div>
@@ -210,6 +222,16 @@ function EarningsDetailModal({ item, onClose }: { item: Earnings; onClose: () =>
         <div>
           <small style={{ color: 'var(--text-muted)' }}>銘柄名</small>
           <div>{item.companyName}</div>
+        </div>
+        <div>
+          <small style={{ color: 'var(--text-muted)' }}>公開日時</small>
+          <div>{formatDateTime(item.publishedAt)}</div>
+        </div>
+        <div>
+          <small style={{ color: 'var(--text-muted)' }}>評価</small>
+          <div>
+            <EvaluationBadge evaluation={item.evaluation} />
+          </div>
         </div>
       </div>
 

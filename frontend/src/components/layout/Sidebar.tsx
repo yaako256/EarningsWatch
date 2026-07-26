@@ -2,12 +2,14 @@
 //   - 折りたたみ時もアイコンのみ常時表示、展開時は文字ラベルも表示
 //   - 最上部にアプリ名+アイコン、最下部にユーザーアイコン+ユーザー名+ログアウト
 //
-// 改善点まとめ資料への対応: 折りたたみ時、アイコンがサイドバー幅の中央に収まるよう
+// Ver1改善点対応: 折りたたみ時、アイコンがサイドバー幅の中央に収まるよう
 // アイテムをフレックスで中央揃えにする(以前はアイコンが左に寄っていた)。
+// Ver2改善点対応: ログアウトボタンを押すと即ログアウトしていたため、確認ダイアログを挟む。
 
 import { NavLink } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
+import { ConfirmDialog } from '../common/ConfirmDialog'
 
 interface NavItem {
   to: string
@@ -27,10 +29,22 @@ const ADMIN_NAV_ITEM: NavItem = { to: '/admin', icon: '🛠', label: '管理者'
 
 export function Sidebar() {
   const [collapsed, setCollapsed] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { user, logout } = useAuth()
 
   const items = user?.role === 'admin' ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
   const initial = user?.username ? user.username.charAt(0).toUpperCase() : '?'
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logout()
+    } finally {
+      setIsLoggingOut(false)
+      setShowLogoutConfirm(false)
+    }
+  }
 
   return (
     <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
@@ -68,13 +82,25 @@ export function Sidebar() {
         </div>
         <button
           className="sidebar-logout"
-          onClick={() => void logout()}
+          onClick={() => setShowLogoutConfirm(true)}
           title="ログアウト"
         >
           <span className="sidebar-item-icon">🚪</span>
           {!collapsed && <span>ログアウト</span>}
         </button>
       </div>
+
+      {showLogoutConfirm && (
+        <ConfirmDialog
+          title="ログアウトの確認"
+          description="ログアウトしますか？"
+          confirmLabel="ログアウトする"
+          danger={false}
+          isSubmitting={isLoggingOut}
+          onConfirm={() => void handleLogout()}
+          onClose={() => setShowLogoutConfirm(false)}
+        />
+      )}
     </aside>
   )
 }

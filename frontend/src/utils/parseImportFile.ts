@@ -1,30 +1,36 @@
 // 一括インポート機能で使う、CSV/Excelファイルのパース処理。
 // フロントエンド側でファイルをパースし、行データの配列にしてから API設計書 7章のインポートAPIへ送る想定。
 //
-// 想定する列見出し(1行目):
-//   全体一括: ticker, companyName, groupName, notes, enabled
-//   グループ単位: ticker, companyName, notes, enabled
-// 大文字小文字・全角スペースの揺れをある程度吸収する。
+// Ver2改善点対応: 列見出しは他システムのCSVと混同しないよう、
+// "EarningsWatch_" プレフィックス付きの固定名のみを受け付ける(緩いエイリアスは廃止)。
+//   全体一括:     EarningsWatch_Ticker, EarningsWatch_CompanyName, EarningsWatch_GroupName,
+//                 EarningsWatch_Notes, EarningsWatch_Enabled
+//   グループ単位: EarningsWatch_Ticker, EarningsWatch_CompanyName,
+//                 EarningsWatch_Notes, EarningsWatch_Enabled
+// 大文字小文字・前後の空白の揺れのみ吸収する(列名自体の意訳・別名は受け付けない)。
 
 import * as XLSX from 'xlsx'
 import type { ImportRow } from '../types/api'
 
 function normalizeHeader(header: string): string {
-  return header.trim().toLowerCase().replace(/[\s_]/g, '')
+  return header.trim().toLowerCase()
 }
 
 const HEADER_ALIASES: Record<string, keyof ImportRow> = {
-  ticker: 'ticker',
-  companyname: 'companyName',
-  会社名: 'companyName',
-  企業名: 'companyName',
-  groupname: 'groupName',
-  グループ名: 'groupName',
-  notes: 'notes',
-  メモ: 'notes',
-  enabled: 'enabled',
-  状態: 'enabled',
+  earningswatch_ticker: 'ticker',
+  earningswatch_companyname: 'companyName',
+  earningswatch_groupname: 'groupName',
+  earningswatch_notes: 'notes',
+  earningswatch_enabled: 'enabled',
 }
+
+export const IMPORT_COLUMN_NAMES = {
+  ticker: 'EarningsWatch_Ticker',
+  companyName: 'EarningsWatch_CompanyName',
+  groupName: 'EarningsWatch_GroupName',
+  notes: 'EarningsWatch_Notes',
+  enabled: 'EarningsWatch_Enabled',
+} as const
 
 function rowsFromSheetJson(json: unknown[][]): ImportRow[] {
   if (json.length === 0) return []

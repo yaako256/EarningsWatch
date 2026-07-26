@@ -54,22 +54,6 @@ export function AdminNotifyConfigTab() {
       <p style={{ color: 'var(--text-muted)' }}>
         システム全体の警告・異常通知の送信先を設定します。
       </p>
-      <label>
-        通知媒体
-        <select
-          value={draft.medium}
-          onChange={(e) =>
-            setDraft(
-              e.target.value === 'discord'
-                ? { ...draft, medium: 'discord', embedColor: draft.medium === 'discord' ? draft.embedColor : null }
-                : { medium: 'slack', webhookUrl: draft.webhookUrl, mentionEnabled: draft.mentionEnabled, mentionTargets: draft.mentionTargets },
-            )
-          }
-        >
-          <option value="discord">Discord</option>
-          <option value="slack">Slack(開発中)</option>
-        </select>
-      </label>
       <GroupConfigForm config={draft} onChange={setDraft} />
       <button className="primary" disabled={isSaving} onClick={handleSave}>
         {isSaving ? '保存中...' : '設定を保存'}

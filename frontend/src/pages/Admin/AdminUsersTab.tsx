@@ -1,12 +1,13 @@
 // ユーザ管理画面。設計書9.10節 + 改善点まとめ資料 対応。
 // 改善点資料: 仮ユーザ作成後、temporaryPasswordが表示されていなかった問題を修正する。
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAsync } from '../../hooks/useAsync'
 import { fetchAdminUsers, createAdminUser, disableAdminUser, fetchAdminUserSummary } from '../../api/admin'
 import { formatDateTime } from '../../utils/format'
-import { SimplePager } from '../../components/common/Pager'
+import { copyToClipboard } from '../../utils/clipboard'
+import { AtCoderPager } from '../../components/common/Pager'
 import { EmptyState, LoadingRow, ErrorState } from '../../components/common/States'
 import { Modal } from '../../components/common/Modal'
 import { ConfirmDialog } from '../../components/common/ConfirmDialog'
@@ -27,6 +28,27 @@ export function AdminUsersTab() {
   )
   const [summaryTarget, setSummaryTarget] = useState<AdminUser | undefined>(undefined)
   const [disableTarget, setDisableTarget] = useState<AdminUser | undefined>(undefined)
+  const passwordRef = useRef<HTMLElement>(null)
+
+  const copyPassword = async (password: string) => {
+    try {
+      await copyToClipboard(password)
+      showToast('success', 'コピーしました。')
+    } catch {
+      // クリップボードAPIが使えない環境向けに、テキストを選択状態にして手動コピーを促す。
+      const selection = window.getSelection()
+      const range = document.createRange()
+      if (passwordRef.current) {
+        range.selectNodeContents(passwordRef.current)
+        selection?.removeAllRanges()
+        selection?.addRange(range)
+      }
+      showToast(
+        'error',
+        'コピーに自動で失敗しました。パスワードの文字列を選択状態にしたので、Ctrl+C(Macは⌘+C)でコピーしてください。',
+      )
+    }
+  }
 
   return (
     <div>
@@ -87,10 +109,10 @@ export function AdminUsersTab() {
         </table>
       )}
 
-      {data && (
-        <SimplePager
+      {data && data.totalPages > 1 && (
+        <AtCoderPager
           currentPage={page}
-          hasNext={data.items.length === data.perPage}
+          totalPages={data.totalPages}
           onChange={(p) => setSearchParams({ page: String(p) })}
         />
       )}
@@ -115,15 +137,10 @@ export function AdminUsersTab() {
           <p>
             ユーザー名: <strong>{createdPassword.username}</strong>
           </p>
-          <code className="password-display">{createdPassword.password}</code>
-          <button
-            onClick={() => {
-              void navigator.clipboard.writeText(createdPassword.password)
-              showToast('success', 'コピーしました。')
-            }}
-          >
-            📋 コピー
-          </button>
+          <code className="password-display" ref={passwordRef}>
+            {createdPassword.password}
+          </code>
+          <button onClick={() => void copyPassword(createdPassword.password)}>📋 コピー</button>
         </Modal>
       )}
 
