@@ -19,21 +19,13 @@ pub async fn export_filters_all(
   let mut workbook = Workbook::new();
   let sheet = workbook.add_worksheet();
 
+  sheet.write_string(0, 0, "EW_Ticker").map_err(xlsx_err)?;
   sheet
-    .write_string(0, 0, "EarningsWatch_Ticker")
+    .write_string(0, 1, "EW_CompanyName")
     .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 1, "EarningsWatch_CompanyName")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 2, "EarningsWatch_GroupName")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 3, "EarningsWatch_Notes")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 4, "EarningsWatch_Enabled")
-    .map_err(xlsx_err)?;
+  sheet.write_string(0, 2, "EW_GroupName").map_err(xlsx_err)?;
+  sheet.write_string(0, 3, "EW_Notes").map_err(xlsx_err)?;
+  sheet.write_string(0, 4, "EW_Enabled").map_err(xlsx_err)?;
 
   let mut row_idx = 1u32;
   for group in &groups {
@@ -81,21 +73,17 @@ pub async fn export_filters_for_group(
   let mut workbook = Workbook::new();
   let sheet = workbook.add_worksheet();
 
+  sheet.write_string(0, 0, "EW_Ticker").map_err(xlsx_err)?;
   sheet
-    .write_string(0, 0, "EarningsWatch_Ticker")
+    .write_string(0, 1, "EW_CompanyName")
     .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 1, "EarningsWatch_CompanyName")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 2, "EarningsWatch_Notes")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 3, "EarningsWatch_Enabled")
-    .map_err(xlsx_err)?;
+  sheet.write_string(0, 2, "EW_GroupName").map_err(xlsx_err)?;
+  sheet.write_string(0, 3, "EW_Notes").map_err(xlsx_err)?;
+  sheet.write_string(0, 4, "EW_Enabled").map_err(xlsx_err)?;
 
-  for (idx, f) in filters.into_iter().enumerate() {
-    let row_idx = (idx + 1) as u32;
+  let mut row_idx = 1u32;
+
+  for f in filters {
     sheet
       .write_string(row_idx, 0, &f.ticker)
       .map_err(xlsx_err)?;
@@ -103,11 +91,15 @@ pub async fn export_filters_for_group(
       .write_string(row_idx, 1, &f.company_name)
       .map_err(xlsx_err)?;
     sheet
-      .write_string(row_idx, 2, f.notes.as_deref().unwrap_or(""))
+      .write_string(row_idx, 2, &group.name)
       .map_err(xlsx_err)?;
     sheet
-      .write_boolean(row_idx, 3, f.enabled)
+      .write_string(row_idx, 3, f.notes.as_deref().unwrap_or(""))
       .map_err(xlsx_err)?;
+    sheet
+      .write_boolean(row_idx, 4, f.enabled)
+      .map_err(xlsx_err)?;
+    row_idx += 1;
   }
 
   workbook.save_to_buffer().map_err(xlsx_err)
