@@ -7,8 +7,10 @@
 // Ver2改善点対応:
 //   - 未設定に戻すボタンを追加
 //   - 未設定時のデフォルト色を #87CEEB にする
-//   - カラーピッカーの当たり判定が広すぎたため、プレビューの色見本(border-left)部分だけに絞る
-//     (上部に独立したinput[type=color]を置かず、色見本自体をクリック可能なピッカーにする)
+// Ver3改善点対応:
+//   - 色見本を絶対配置でプレビューに重ねる実装だと、当たり判定がプレビュー全体ににじんで
+//     見えてしまっていたため、絶対配置をやめて独立した小さな正方形ボタンとして
+//     プレビューの外(隣)に配置する。当たり判定とクリック可能に見える範囲が完全に一致する。
 
 import { useRef } from 'react'
 
@@ -34,12 +36,7 @@ export function EmbedColorPicker({ value, onChange }: EmbedColorPickerProps) {
 
   return (
     <div>
-      <div
-        className="embed-preview"
-        style={{ borderLeftColor: cssColor, width: 220 }}
-      >
-        {/* 色見本(border-left)部分だけをカラーピッカーの当たり判定にする。
-            ネイティブcolor inputを重ねて透明化し、見た目は色帯のクリックに見せる。 */}
+      <div className="embed-color-row">
         <button
           type="button"
           className="embed-color-swatch"
@@ -54,16 +51,16 @@ export function EmbedColorPicker({ value, onChange }: EmbedColorPickerProps) {
           value={cssColor}
           onChange={(e) => onChange(toEmbedColor(e.target.value))}
           aria-label="Embed色"
-          style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
+          tabIndex={-1}
         />
-        <div className="embed-title">サンプル: XXXX(証券コード)決算速報</div>
-        <div className="embed-body">プレビュー表示です</div>
-      </div>
-      <div className="color-picker-row" style={{ marginTop: 8 }}>
         <span className="badge">{value ?? `未設定(0x${DEFAULT_COLOR_HEX})`}</span>
         <button type="button" onClick={() => onChange(null)} disabled={value === null}>
           未設定に戻す
         </button>
+      </div>
+      <div className="embed-preview" style={{ borderLeftColor: cssColor, width: 220 }}>
+        <div className="embed-title">サンプル: XXXX(証券コード)決算速報</div>
+        <div className="embed-body">プレビュー表示です</div>
       </div>
     </div>
   )

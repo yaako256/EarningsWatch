@@ -70,14 +70,18 @@ export function GroupConfigForm({ config, onChange }: GroupConfigFormProps) {
         </label>
       )}
 
-      <label className="check">
+      {/* Ver3改善点対応: <label>でinputとテキストを丸ごと囲むと、テキスト部分をクリックしても
+          反応してしまい「判定が広すぎる」という指摘につながった。inputだけを独立させ、
+          テキストは装飾のspanにしてクリックしても何も起きないようにする。 */}
+      <div className="check-row">
         <input
+          id="mention-enabled"
           type="checkbox"
           checked={config.mentionEnabled}
           onChange={(e) => onChange({ ...config, mentionEnabled: e.target.checked })}
         />
-        メンションを有効にする
-      </label>
+        <span>メンションを有効にする</span>
+      </div>
 
       {config.mentionEnabled && (
         <label>

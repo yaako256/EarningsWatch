@@ -24,7 +24,7 @@ import { Modal } from '../../components/common/Modal'
 import { ImportModal } from '../../components/common/ImportModal'
 import { ConfirmDialog } from '../../components/common/ConfirmDialog'
 import { useToast } from '../../contexts/ToastContext'
-import { ApiError, downloadFile } from '../../api/client'
+import { ApiError, downloadFile, qs } from '../../api/client'
 import { exportFileName } from '../../utils/format'
 import type { Filter, Group, ImportRow } from '../../types/api'
 
@@ -115,9 +115,13 @@ export function GroupFiltersTab() {
     }
   }
 
+  // API設計書7.3節: /groups/{id}/filters/export も format クエリ(現状xlsxのみ)が必須。
   const handleExport = async () => {
     try {
-      await downloadFile(`/groups/${group.id}/filters/export`, exportFileName(`${group.name}_filters.xlsx`))
+      await downloadFile(
+        `/groups/${group.id}/filters/export?${qs({ format: 'xlsx' })}`,
+        exportFileName(`${group.name}_filters.xlsx`),
+      )
     } catch {
       showToast('error', 'エクスポートに失敗しました。')
     }

@@ -87,7 +87,7 @@ body {
 }
 
 #root {
-  min-height: 100vh;
+  height: 100%;
 }
 
 h1,
@@ -208,16 +208,46 @@ label {
   width: auto;
 }
 
+/* Ver3改善点対応: labelでinput+テキストを丸ごと囲むとテキスト部分もクリック判定に
+   入ってしまうため、labelを使わずinputとテキストを分離した行として組む。
+   テキスト(span)はクリックしても反応しない。 */
+.check-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.check-row input {
+  width: auto;
+  cursor: pointer;
+}
+
 .required-mark {
   color: var(--danger);
   margin-left: 2px;
 }
 
-/* --- アプリ全体レイアウト --- */
+/* --- アプリ全体レイアウト ---
+   Ver3改善点対応: 以前は#root/.app-shellがmin-height指定のみで、ページが長くなると
+   html/body自体がスクロールし、サイドバーもコンテンツと一緒に流れてユーザー名や
+   ログアウトボタンが画面外に押し出されていた。
+   .app-shellを画面の高さちょうどに固定し、.contentだけを独立スクロール領域にすることで、
+   サイドバーは常に画面内に固定されたまま、メイン画面だけがスクロールするようにする。
+*/
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+}
 
 .app-shell {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
 }
 
 /* --- サイドバー ---
@@ -297,6 +327,7 @@ label {
   gap: 2px;
   padding: var(--space-4) var(--space-2);
   flex: 1;
+  overflow-y: auto;
 }
 
 .sidebar-item {
@@ -724,10 +755,23 @@ tbody tr:hover {
 }
 
 .mentions li button {
-  padding: 0 2px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
   border: 0;
+  border-radius: 50%;
   background: transparent;
   color: var(--text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.mentions li button:hover {
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 .mention-adder {
@@ -745,6 +789,14 @@ tbody tr:hover {
   width: auto;
 }
 
+/* Ver3改善点対応: フォーカスリングが outline-offset: 2px で外側にはみ出し、
+   隣接する「+ 追加」ボタンの近くにまでオレンジの枠が見えてしまっていたため、
+   このエリアに限り内側(offset: -2px)に描画してにじみを防ぐ。 */
+.mention-adder select:focus-visible,
+.mention-adder input:focus-visible {
+  outline-offset: -2px;
+}
+
 .mention-adder button {
   flex: 0 0 auto;
   white-space: nowrap;
@@ -754,19 +806,42 @@ tbody tr:hover {
   max-width: 820px;
 }
 
-/* --- Embedカラー・プレビュー --- */
+/* --- Embedカラー・プレビュー ---
+   Ver3改善点対応: 色見本(embed-color-swatch)を絶対配置でプレビューに重ねる実装だと、
+   当たり判定が視覚的な範囲より広くにじんで見えてしまっていた。
+   独立した正方形ボタンとして配置し、当たり判定=見た目の範囲を完全に一致させる。
+   ネイティブのinput[type=color]自体は画面上どこにも見えない位置に隠し、
+   ボタンのクリックでinput.click()を呼ぶことで開閉する。
+*/
 
-.color-picker-row {
+.embed-color-row {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 
-.color-picker-row input[type='color'] {
-  width: 44px;
-  height: 38px;
-  padding: 2px;
+.embed-color-swatch {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.embed-color-swatch:hover {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 1px;
+}
+
+.embed-color-row input[type='color'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .embed-preview {
@@ -775,26 +850,6 @@ tbody tr:hover {
   background: #1d232f;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   padding: var(--space-3) var(--space-4);
-  margin-top: var(--space-3);
-  position: relative;
-}
-
-/* Ver2改善点対応: カラーピッカーの当たり判定をこの色見本だけに絞る */
-.embed-color-swatch {
-  position: absolute;
-  left: -4px;
-  top: 0;
-  width: 8px;
-  height: 100%;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  cursor: pointer;
-}
-
-.embed-color-swatch:hover {
-  outline: 2px solid var(--accent-strong);
-  outline-offset: 1px;
 }
 
 .embed-preview .embed-title {

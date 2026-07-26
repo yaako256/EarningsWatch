@@ -15,7 +15,7 @@ import { formatDateTime, exportFileName } from '../utils/format'
 import { AtCoderPager } from '../components/common/Pager'
 import { EmptyState, LoadingRow, ErrorState } from '../components/common/States'
 import { Modal } from '../components/common/Modal'
-import { downloadFile } from '../api/client'
+import { downloadFile, qs } from '../api/client'
 import { useToast } from '../contexts/ToastContext'
 import type { Earnings, EarningsEvaluation } from '../types/api'
 
@@ -85,9 +85,13 @@ export function EarningsPage() {
     setSearchParams(next)
   }
 
+  // API設計書7.3節・Rust側 ExportEarningsQuery より:
+  // /earnings/export は format(必須) に加えて ticker/company_name/evaluation/from/to の
+  // 絞り込みクエリも受け付ける。画面で選択中の条件をそのままエクスポートにも反映させる。
   const handleExport = async () => {
     try {
-      await downloadFile('/earnings/export', exportFileName('earnings.xlsx'))
+      const query = qs({ ...filters, format: 'xlsx' })
+      await downloadFile(`/earnings/export?${query}`, exportFileName('earnings.xlsx'))
     } catch {
       showToast('error', 'エクスポートに失敗しました。')
     }

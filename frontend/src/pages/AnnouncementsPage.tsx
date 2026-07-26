@@ -363,10 +363,10 @@ function AnnouncementEditModal({
         <textarea rows={12} value={content} onChange={(e) => setContent(e.target.value)} />
       </label>
 
-      <label className="check">
+      <div className="check-row">
         <input type="checkbox" checked={isPublished} onChange={(e) => setIsPublished(e.target.checked)} />
-        公開する
-      </label>
+        <span>公開する</span>
+      </div>
 
       <div className="page-header-actions" style={{ justifyContent: 'flex-end', marginTop: 16 }}>
         <button onClick={onClose}>キャンセル</button>

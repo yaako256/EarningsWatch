@@ -17,7 +17,7 @@ import { Modal } from '../components/common/Modal'
 import { ConfirmDialog } from '../components/common/ConfirmDialog'
 import { ImportModal } from '../components/common/ImportModal'
 import { useToast } from '../contexts/ToastContext'
-import { ApiError, downloadFile } from '../api/client'
+import { ApiError, downloadFile, qs } from '../api/client'
 import type { Group, ImportRow } from '../types/api'
 
 const NAME_MAX_LENGTH = 30
@@ -64,12 +64,10 @@ export function GroupsPage() {
     }
   }
 
-  // API設計書7.3節では「グループのエクスポート」というエンドポイントは存在せず、
-  // 全グループ分のフィルタをまとめてエクスポートする /filters/export が対応する機能。
-  // (以前の実装は存在しない /groups/export を呼んでおり、405エラーの原因になっていた)
+  // API設計書7.3節: /filters/export は format クエリ(現状xlsxのみ)が必須。
   const handleExport = async () => {
     try {
-      await downloadFile('/filters/export', exportFileName('filters.xlsx'))
+      await downloadFile(`/filters/export?${qs({ format: 'xlsx' })}`, exportFileName('filters.xlsx'))
     } catch {
       showToast('error', 'エクスポートに失敗しました。')
     }
