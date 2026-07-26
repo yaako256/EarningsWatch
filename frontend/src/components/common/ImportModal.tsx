@@ -4,11 +4,16 @@
 // Ver2改善点対応: ネイティブの<input type="file">は「選択されていません」というテキスト部分も
 // クリック領域に含んでしまうため非表示にし、代わりに独自の「ファイルを選択」ボタンだけを
 // クリック可能にしてinput.click()を呼ぶ方式にする。
+// Ver4改善点対応:
+//   - 警告・エラーメッセージが読点区切りの1行になっていて読みにくかったため、行ごとに改行して表示する
+//   - 必須列欠落等の致命的エラー(errorRows)がAPIから返っていても、以前は警告(warnings)と
+//     見分けがつきにくかったため、見出しを分けて明確に区別する
+//   - ファイル選択時点のエラー(拡張子違い・列名不一致・破損ファイル)を種別ごとに出し分ける
 
 import { useRef, useState } from 'react'
 import type { DragEvent } from 'react'
 import { Modal } from './Modal'
-import { parseImportFile, IMPORT_COLUMN_NAMES } from '../../utils/parseImportFile'
+import { parseImportFile, IMPORT_COLUMN_NAMES, ImportFileError } from '../../utils/parseImportFile'
 import type { ImportResult, ImportRow } from '../../types/api'
 import { useToast } from '../../contexts/ToastContext'
 
@@ -27,18 +32,26 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
   const [fileName, setFileName] = useState('')
   const [isDragOver, setIsDragOver] = useState(false)
   const [result, setResult] = useState<ImportResult | undefined>(undefined)
+  const [fileError, setFileError] = useState('')
+  const [submitError, setSubmitError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [error, setError] = useState('')
 
   const handleFile = async (file: File) => {
-    setError('')
+    setFileError('')
+    setSubmitError('')
     setResult(undefined)
     try {
       const parsed = await parseImportFile(file)
       setRows(parsed)
       setFileName(file.name)
-    } catch {
-      setError('ファイルを読み取れませんでした。CSVまたはExcel形式のファイルを選択してください。')
+    } catch (err) {
+      setRows(undefined)
+      setFileName('')
+      if (err instanceof ImportFileError) {
+        setFileError(err.message)
+      } else {
+        setFileError('ファイルを読み取れませんでした。CSVまたはExcel形式のファイルを選択してください。')
+      }
     }
   }
 
@@ -52,7 +65,7 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
   const runImport = async (dryRun: boolean) => {
     if (!rows) return
     setIsSubmitting(true)
-    setError('')
+    setSubmitError('')
     try {
       const outcome = await onImport(rows, dryRun)
       setResult(outcome)
@@ -61,7 +74,7 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
         onImported()
       }
     } catch {
-      setError('取り込みに失敗しました。ファイル内容を確認するか、時間をおいて再度お試しください。')
+      setSubmitError('取り込みに失敗しました。ファイル内容を確認するか、時間をおいて再度お試しください。')
     } finally {
       setIsSubmitting(false)
     }
@@ -112,25 +125,46 @@ export function ImportModal({ title, scopeHint, onImport, onClose, onImported }:
         </div>
       </div>
 
-      {error && <p className="inline-error">{error}</p>}
+      {fileError && <p className="inline-error">{fileError}</p>}
+      {submitError && <p className="inline-error">{submitError}</p>}
 
       {result && (
         <div className="notice-banner" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-          <div>取り込み対象: {result.importedCount}件 / スキップ(空行): {result.skippedEmptyRows}件 / 重複: {result.duplicateCount}件</div>
+          <div>
+            取り込み対象: {result.importedCount}件 / スキップ(空行): {result.skippedEmptyRows}件 / 重複: {result.duplicateCount}件
+          </div>
           {result.createdGroups.length > 0 && (
             <div>新規作成されたグループ: {result.createdGroups.map((g) => g.name).join('、')}</div>
           )}
           {result.pausedGroups.length > 0 && (
             <div>一時停止中のグループ: {result.pausedGroups.map((g) => g.name).join('、')}</div>
           )}
+
+          {/* Ver4改善点対応: 必須列欠落等の致命的エラー(errorRows)は、警告(warnings)とは
+              見出しを分けたうえで、1行1件の縦並びリストとして表示する(読点連結による
+              読みにくさを解消する)。 */}
           {result.errorRows.length > 0 && (
             <div>
-              エラー行: {result.errorRows.map((r) => `${r.rowNumber}行目(${r.reason})`).join('、')}
+              <strong style={{ color: 'var(--danger)' }}>エラーのある行(取り込まれませんでした)</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+                {result.errorRows.map((r) => (
+                  <li key={r.rowNumber}>
+                    {r.rowNumber}行目: {r.reason}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
           {result.warnings.length > 0 && (
             <div>
-              警告: {result.warnings.map((w) => `${w.rowNumber}行目: ${w.message}`).join('、')}
+              <strong style={{ color: 'var(--warning)' }}>警告(取り込みは行われました)</strong>
+              <ul style={{ margin: '4px 0 0', paddingLeft: 20 }}>
+                {result.warnings.map((w) => (
+                  <li key={w.rowNumber}>
+                    {w.rowNumber}行目: {w.message}
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

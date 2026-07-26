@@ -22,6 +22,25 @@ export function disableAdminUser(id: string) {
   return api.post<null>(`/admin/users/${id}/disable`)
 }
 
+// Ver4改善点対応: バックエンド未実装だが、無効化(disable)と対称になる形で
+// フロントエンド側だけ先行実装しておく。エンドポイント名は仮決め。
+// バックエンド実装時にパスが変わる場合はここだけ修正すればよい。
+export function enableAdminUser(id: string) {
+  return api.post<null>(`/admin/users/${id}/enable`)
+}
+
+// 完全削除(disable/enableと違い元に戻せない操作のため、確認ダイアログでの
+// タイプ確認必須とセットで運用する想定)。エンドポイント名・メソッドは仮決め。
+export function deleteAdminUserPermanently(id: string) {
+  return api.del<null>(`/admin/users/${id}`)
+}
+
+// パスワード再設定(仮ユーザ作成時と同様、temporaryPasswordを1回だけ返す想定)。
+// エンドポイント名は仮決め。
+export function resetAdminUserPassword(id: string) {
+  return api.post<{ temporaryPassword: string }>(`/admin/users/${id}/reset-password`)
+}
+
 export function fetchAdminUserSummary(id: string) {
   return api.get<AdminUserSummary>(`/admin/users/${id}/summary`)
 }

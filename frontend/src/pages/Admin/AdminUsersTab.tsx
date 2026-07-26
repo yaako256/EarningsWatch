@@ -1,10 +1,24 @@
 // ユーザ管理画面。設計書9.10節 + 改善点まとめ資料 対応。
 // 改善点資料: 仮ユーザ作成後、temporaryPasswordが表示されていなかった問題を修正する。
+//
+// Ver4改善点対応: バックエンドは未実装だが、以下をフロントエンド側だけ先行実装しておく
+// (エンドポイント名は仮決め。バックエンド実装時に api/admin.ts のパスのみ調整すればよい)。
+//   - ユーザーの有効化(無効化の対称操作)
+//   - ユーザーの完全削除(取り消し不可のため、削除と同じ「delete」入力必須の確認ダイアログにする)
+//   - パスワード再設定(仮ユーザ作成時と同様、temporaryPasswordを1回だけ表示する)
 
 import { useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useAsync } from '../../hooks/useAsync'
-import { fetchAdminUsers, createAdminUser, disableAdminUser, fetchAdminUserSummary } from '../../api/admin'
+import {
+  fetchAdminUsers,
+  createAdminUser,
+  disableAdminUser,
+  enableAdminUser,
+  deleteAdminUserPermanently,
+  resetAdminUserPassword,
+  fetchAdminUserSummary,
+} from '../../api/admin'
 import { formatDateTime } from '../../utils/format'
 import { copyToClipboard } from '../../utils/clipboard'
 import { AtCoderPager } from '../../components/common/Pager'
@@ -23,11 +37,15 @@ export function AdminUsersTab() {
   const { data, isLoading, error, reload } = useAsync(() => fetchAdminUsers(page), [page])
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createdPassword, setCreatedPassword] = useState<{ username: string; password: string } | undefined>(
-    undefined,
-  )
+  const [temporaryPasswordDisplay, setTemporaryPasswordDisplay] = useState<
+    { username: string; password: string } | undefined
+  >(undefined)
   const [summaryTarget, setSummaryTarget] = useState<AdminUser | undefined>(undefined)
   const [disableTarget, setDisableTarget] = useState<AdminUser | undefined>(undefined)
+  const [enableTarget, setEnableTarget] = useState<AdminUser | undefined>(undefined)
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | undefined>(undefined)
+  const [resetPasswordTarget, setResetPasswordTarget] = useState<AdminUser | undefined>(undefined)
+  const [busyId, setBusyId] = useState<string | undefined>(undefined)
   const passwordRef = useRef<HTMLElement>(null)
 
   const copyPassword = async (password: string) => {
@@ -47,6 +65,65 @@ export function AdminUsersTab() {
         'error',
         'コピーに自動で失敗しました。パスワードの文字列を選択状態にしたので、Ctrl+C(Macは⌘+C)でコピーしてください。',
       )
+    }
+  }
+
+  const handleDisable = async () => {
+    if (!disableTarget) return
+    setBusyId(disableTarget.id)
+    try {
+      await disableAdminUser(disableTarget.id)
+      showToast('success', '無効化しました。')
+      setDisableTarget(undefined)
+      reload()
+    } catch (err) {
+      showToast('error', err instanceof ApiError ? err.message : '操作に失敗しました。')
+    } finally {
+      setBusyId(undefined)
+    }
+  }
+
+  const handleEnable = async () => {
+    if (!enableTarget) return
+    setBusyId(enableTarget.id)
+    try {
+      await enableAdminUser(enableTarget.id)
+      showToast('success', '有効化しました。')
+      setEnableTarget(undefined)
+      reload()
+    } catch (err) {
+      showToast('error', err instanceof ApiError ? err.message : '操作に失敗しました。')
+    } finally {
+      setBusyId(undefined)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setBusyId(deleteTarget.id)
+    try {
+      await deleteAdminUserPermanently(deleteTarget.id)
+      showToast('success', '完全に削除しました。')
+      setDeleteTarget(undefined)
+      reload()
+    } catch (err) {
+      showToast('error', err instanceof ApiError ? err.message : '削除に失敗しました。')
+    } finally {
+      setBusyId(undefined)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetPasswordTarget) return
+    setBusyId(resetPasswordTarget.id)
+    try {
+      const result = await resetAdminUserPassword(resetPasswordTarget.id)
+      setTemporaryPasswordDisplay({ username: resetPasswordTarget.username, password: result.temporaryPassword })
+      setResetPasswordTarget(undefined)
+    } catch (err) {
+      showToast('error', err instanceof ApiError ? err.message : 'パスワード再設定に失敗しました。')
+    } finally {
+      setBusyId(undefined)
     }
   }
 
@@ -97,11 +174,27 @@ export function AdminUsersTab() {
                   )}
                 </td>
                 <td>
-                  {!u.disabledAt && (
-                    <button className="danger-button" onClick={() => setDisableTarget(u)}>
-                      無効化
+                  <div className="cell-actions">
+                    {u.disabledAt ? (
+                      <button disabled={busyId === u.id} onClick={() => setEnableTarget(u)}>
+                        有効化
+                      </button>
+                    ) : (
+                      <button disabled={busyId === u.id} onClick={() => setDisableTarget(u)}>
+                        無効化
+                      </button>
+                    )}
+                    <button disabled={busyId === u.id} onClick={() => setResetPasswordTarget(u)}>
+                      パスワード再設定
                     </button>
-                  )}
+                    <button
+                      className="danger-button"
+                      disabled={busyId === u.id}
+                      onClick={() => setDeleteTarget(u)}
+                    >
+                      完全削除
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -122,25 +215,25 @@ export function AdminUsersTab() {
           onClose={() => setShowCreate(false)}
           onCreated={(username, password) => {
             setShowCreate(false)
-            setCreatedPassword({ username, password })
+            setTemporaryPasswordDisplay({ username, password })
             reload()
           }}
         />
       )}
 
-      {createdPassword && (
-        <Modal title="ユーザーを作成しました" onClose={() => setCreatedPassword(undefined)}>
+      {temporaryPasswordDisplay && (
+        <Modal title="仮パスワード" onClose={() => setTemporaryPasswordDisplay(undefined)}>
           <p className="password-warning">
             この仮パスワードはこの画面を閉じると二度と表示できません。必ずこの場でコピーし、
             利用者に安全な方法で伝達してください。
           </p>
           <p>
-            ユーザー名: <strong>{createdPassword.username}</strong>
+            ユーザー名: <strong>{temporaryPasswordDisplay.username}</strong>
           </p>
           <code className="password-display" ref={passwordRef}>
-            {createdPassword.password}
+            {temporaryPasswordDisplay.password}
           </code>
-          <button onClick={() => void copyPassword(createdPassword.password)}>📋 コピー</button>
+          <button onClick={() => void copyPassword(temporaryPasswordDisplay.password)}>📋 コピー</button>
         </Modal>
       )}
 
@@ -151,19 +244,47 @@ export function AdminUsersTab() {
       {disableTarget && (
         <ConfirmDialog
           title="ユーザーの無効化"
-          description={`「${disableTarget.username}」を無効化します。この操作は元に戻せません。`}
+          description={`「${disableTarget.username}」を無効化します。ログインできなくなります。`}
           confirmLabel="無効化する"
-          onConfirm={async () => {
-            try {
-              await disableAdminUser(disableTarget.id)
-              showToast('success', '無効化しました。')
-              setDisableTarget(undefined)
-              reload()
-            } catch (err) {
-              showToast('error', err instanceof ApiError ? err.message : '操作に失敗しました。')
-            }
-          }}
+          isSubmitting={busyId === disableTarget.id}
+          onConfirm={handleDisable}
           onClose={() => setDisableTarget(undefined)}
+        />
+      )}
+
+      {enableTarget && (
+        <ConfirmDialog
+          title="ユーザーの有効化"
+          description={`「${enableTarget.username}」を有効化します。再びログインできるようになります。`}
+          confirmLabel="有効化する"
+          danger={false}
+          isSubmitting={busyId === enableTarget.id}
+          onConfirm={handleEnable}
+          onClose={() => setEnableTarget(undefined)}
+        />
+      )}
+
+      {deleteTarget && (
+        <ConfirmDialog
+          title="ユーザーの完全削除"
+          description={`「${deleteTarget.username}」を完全に削除します。\nこのユーザーが持つグループ・フィルタ等もすべて連鎖して削除され、元に戻せません。`}
+          requireTypedConfirmation="delete"
+          confirmLabel="完全に削除する"
+          isSubmitting={busyId === deleteTarget.id}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteTarget(undefined)}
+        />
+      )}
+
+      {resetPasswordTarget && (
+        <ConfirmDialog
+          title="パスワードの再設定"
+          description={`「${resetPasswordTarget.username}」の新しい仮パスワードを発行します。現在のパスワードは無効になります。`}
+          confirmLabel="再設定する"
+          danger={false}
+          isSubmitting={busyId === resetPasswordTarget.id}
+          onConfirm={handleResetPassword}
+          onClose={() => setResetPasswordTarget(undefined)}
         />
       )}
     </div>

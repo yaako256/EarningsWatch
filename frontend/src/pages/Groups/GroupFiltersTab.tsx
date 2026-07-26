@@ -120,7 +120,7 @@ export function GroupFiltersTab() {
     try {
       await downloadFile(
         `/groups/${group.id}/filters/export?${qs({ format: 'xlsx' })}`,
-        exportFileName(`${group.name}_filters.xlsx`),
+        exportFileName(`group_filters_${group.name}.xlsx`),
       )
     } catch {
       showToast('error', 'エクスポートに失敗しました。')

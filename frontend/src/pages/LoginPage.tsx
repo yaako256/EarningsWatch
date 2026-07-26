@@ -28,6 +28,20 @@ export function LoginPage() {
     return <Navigate to={from} replace />
   }
 
+  // Ver4改善点対応: ApiErrorのmessageは共通のコード変換表(errorCodeMessage)由来のため、
+  // unauthorizedが「ログインの有効期限切れ」という文言になっており、ログイン失敗時に
+  // 出すには不適切だった。ログイン画面ではAPI設計書4.2節記載の2種類のエラーコード
+  // (unauthorized: ユーザ名/パスワード不一致、forbidden: アカウント無効化)に応じて
+  // 専用の文言に差し替える。
+  const loginErrorMessage = (err: unknown): string => {
+    if (err instanceof ApiError) {
+      if (err.code === 'unauthorized') return 'ユーザ名またはパスワードが違っています。'
+      if (err.code === 'forbidden') return 'あなたはBANされています。管理者にお問い合わせください。'
+      return err.message
+    }
+    return 'ログインに失敗しました。'
+  }
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -35,7 +49,7 @@ export function LoginPage() {
     try {
       await login(username, password)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'ログインに失敗しました。')
+      setError(loginErrorMessage(err))
     } finally {
       setIsSubmitting(false)
     }

@@ -5,8 +5,13 @@
 // Ver1改善点対応: 折りたたみ時、アイコンがサイドバー幅の中央に収まるよう
 // アイテムをフレックスで中央揃えにする(以前はアイコンが左に寄っていた)。
 // Ver2改善点対応: ログアウトボタンを押すと即ログアウトしていたため、確認ダイアログを挟む。
+// Ver4改善点対応: ログアウト後、次にログインした際に「ログアウト時点のページ」へ戻ってしまっていた。
+// これはRequireAuthが未認証を検知した際にstate.fromへ現在地を積む仕組みと、
+// ログアウトが単に見た目上のURLをそのままにしていたことの組み合わせが原因。
+// ログアウト成功時に明示的にstateなしで/loginへ遷移させることで、次回ログイン時は
+// 常にダッシュボードへ行くようにする。
 
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { ConfirmDialog } from '../common/ConfirmDialog'
@@ -32,6 +37,7 @@ export function Sidebar() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const { user, logout } = useAuth()
+  const navigate = useNavigate()
 
   const items = user?.role === 'admin' ? [...NAV_ITEMS, ADMIN_NAV_ITEM] : NAV_ITEMS
   const initial = user?.username ? user.username.charAt(0).toUpperCase() : '?'
@@ -40,6 +46,7 @@ export function Sidebar() {
     setIsLoggingOut(true)
     try {
       await logout()
+      navigate('/login', { replace: true, state: undefined })
     } finally {
       setIsLoggingOut(false)
       setShowLogoutConfirm(false)

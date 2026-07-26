@@ -86,6 +86,12 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* MobileGate表示中はデスクトップ向けのmin-width制約を解除する */
+html.mobile-gate-active,
+html.mobile-gate-active body {
+  min-width: 0;
+}
+
 #root {
   height: 100%;
 }
@@ -728,10 +734,6 @@ tbody tr:hover {
   padding: 0;
 }
 
-.masked-value {
-  letter-spacing: 2px;
-}
-
 /* --- メンション設定 --- */
 
 .mentions ul {
@@ -927,6 +929,13 @@ tbody tr:hover {
   background: var(--bg-elevated);
   border-radius: 0 var(--radius-md) var(--radius-md) 0;
   padding: var(--space-4);
+}
+
+/* Ver4改善点対応: タイトル等が短いとカード内の要素が上に寄ってしまっていたため、
+   公開日時・評価(footer相当)を常にカード下端に固定する。 */
+.earning-card-footer {
+  margin-top: auto;
+  padding-top: var(--space-2);
 }
 
 .earning-card.positive {
@@ -1273,6 +1282,51 @@ tbody tr.log-error:hover {
 
 .forbidden h1 {
   margin-bottom: var(--space-3);
+}
+
+/* --- スマホ非対応の警告画面 ---
+   Ver4改善点対応: html/bodyのmin-width: 1080pxにより、狭い画面幅でアクセスしても
+   ただ横スクロールバーが出るだけで警告自体が表示されていなかった。
+   この画面表示中はmin-widthの制約を打ち消し、画面幅に収まるようにする。 */
+.mobile-gate {
+  min-width: 0;
+  width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: var(--space-5);
+  box-sizing: border-box;
+  background: var(--bg);
+}
+
+.mobile-gate-card {
+  max-width: 100%;
+  width: 320px;
+  text-align: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-5);
+}
+
+.mobile-gate-icon {
+  font-size: 40px;
+  margin-bottom: var(--space-3);
+}
+
+.mobile-gate-card h1 {
+  font-size: 18px;
+  margin-bottom: var(--space-3);
+}
+
+.mobile-gate-card p {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin: 0 0 var(--space-3);
+}
+
+.mobile-gate-card .primary {
+  width: 100%;
 }
 
 .muted {

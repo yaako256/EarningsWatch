@@ -64,6 +64,10 @@ export interface ImportRow {
   groupName?: string
   notes?: string | null
   enabled?: boolean | null
+  // Ver4改善点対応: 一時停止中のグループを全体エクスポート→インポートすると、
+  // (今回登場しなかったグループが一時停止される仕様の裏返しで)意図せず有効化されてしまう問題への対応。
+  // バックエンド未実装のため列名・挙動は仮決め。省略時はfalse(＝有効)として扱う想定。
+  groupPausedAt?: string | null
 }
 
 export interface ImportResult {
