@@ -95,7 +95,7 @@ pub fn classify_row(
 
   let enabled_was_missing = enabled.is_none();
   if enabled_was_missing {
-    warnings.push("EarningsWatch_Enabledが未入力のためtrueとして扱いました".to_string());
+    warnings.push("EW_Enabledが未入力のためtrueとして扱いました".to_string());
   }
 
   RowOutcome::Valid {

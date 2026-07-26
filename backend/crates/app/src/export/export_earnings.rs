@@ -67,26 +67,18 @@ pub async fn export_earnings(
   let mut workbook = Workbook::new();
   let sheet = workbook.add_worksheet();
 
+  sheet.write_string(0, 0, "EW_Ticker").map_err(xlsx_err)?;
   sheet
-    .write_string(0, 0, "EarningsWatch_Ticker")
+    .write_string(0, 1, "EW_CompanyName")
     .map_err(xlsx_err)?;
   sheet
-    .write_string(0, 1, "EarningsWatch_CompanyName")
+    .write_string(0, 2, "EW_PublishedAt")
     .map_err(xlsx_err)?;
+  sheet.write_string(0, 3, "EW_Title").map_err(xlsx_err)?;
+  sheet.write_string(0, 4, "EW_Url").map_err(xlsx_err)?;
+  sheet.write_string(0, 5, "EW_Summary").map_err(xlsx_err)?;
   sheet
-    .write_string(0, 2, "EarningsWatch_PublishedAt")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 3, "EarningsWatch_Title")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 4, "EarningsWatch_Url")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 5, "EarningsWatch_Summary")
-    .map_err(xlsx_err)?;
-  sheet
-    .write_string(0, 6, "EarningsWatch_Evaluation")
+    .write_string(0, 6, "EW_Evaluation")
     .map_err(xlsx_err)?;
 
   for (idx, r) in filtered.into_iter().enumerate() {
